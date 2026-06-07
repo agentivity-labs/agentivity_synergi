@@ -1,0 +1,116 @@
+{
+  "id": "e2e00001-0000-0000-0000-000000000002",
+  "name": "E2E - Chat - HIL Single Round",
+  "description": "",
+  "entryNode": "",
+  "version": 0,
+  "updatedAt": "2026-05-30T18:17:40.9870996+00:00",
+  "nodes": [
+    {
+      "id": "chat_channel",
+      "nodeType": "ai.interactions.chat",
+      "position": {
+        "x": 200,
+        "y": 400
+      },
+      "zIndex": 0,
+      "inputs": {
+        "channel_type": "chat",
+        "default_thread_title": "E2E HIL Single",
+        "workflow_author_name": "E2E",
+        "timeout_minutes": 5
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Chat Channel"
+      }
+    },
+    {
+      "id": "intro",
+      "nodeType": "interaction.human",
+      "position": {
+        "x": 400,
+        "y": 150
+      },
+      "zIndex": 0,
+      "inputs": {
+        "operation": "send",
+        "message": "Welcome to the E2E single-round HIL test."
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Intro"
+      }
+    },
+    {
+      "id": "ask_user",
+      "nodeType": "interaction.human",
+      "position": {
+        "x": 650,
+        "y": 150
+      },
+      "zIndex": 0,
+      "inputs": {
+        "operation": "send_and_wait",
+        "message": "Please type any reply to continue.",
+        "timeout_minutes": 5
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Ask User"
+      }
+    },
+    {
+      "id": "confirm",
+      "nodeType": "interaction.human",
+      "position": {
+        "x": 900,
+        "y": 150
+      },
+      "zIndex": 0,
+      "inputs": {
+        "operation": "send",
+        "message": "Reply received: {{ ask_user.response_text }}. Test complete."
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Confirm"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": "intro",
+      "fromPort": "out",
+      "to": "ask_user",
+      "toPort": "in"
+    },
+    {
+      "from": "ask_user",
+      "fromPort": "out",
+      "to": "confirm",
+      "toPort": "in"
+    },
+    {
+      "from": "chat_channel",
+      "fromPort": "resource",
+      "to": "intro",
+      "toPort": "channel"
+    },
+    {
+      "from": "chat_channel",
+      "fromPort": "resource",
+      "to": "ask_user",
+      "toPort": "channel"
+    },
+    {
+      "from": "chat_channel",
+      "fromPort": "resource",
+      "to": "confirm",
+      "toPort": "channel"
+    }
+  ],
+  "metadata": {},
+  "dataTables": {},
+  "annotations": []
+}

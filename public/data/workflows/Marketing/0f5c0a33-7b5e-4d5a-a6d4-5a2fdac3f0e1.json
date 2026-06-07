@@ -1,0 +1,1227 @@
+{
+  "id": "0f5c0a33-7b5e-4d5a-a6d4-5a2fdac3f0e1",
+  "name": "SEO Article Writer",
+  "description": "",
+  "entryNode": "",
+  "version": 162,
+  "updatedAt": "2026-03-12T21:33:57.4602452+00:00",
+  "nodes": [
+    {
+      "id": "scraper_direct",
+      "nodeType": "web.scraper.direct",
+      "position": {
+        "x": -535,
+        "y": 546
+      },
+      "zIndex": 0,
+      "inputs": {},
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Direct Web Scraper (for structure analysis)",
+        "label": "Direct Scraper"
+      }
+    },
+    {
+      "id": "file_storage",
+      "nodeType": "storage.file",
+      "position": {
+        "x": -1124,
+        "y": 69
+      },
+      "zIndex": 0,
+      "inputs": {
+        "file_path": "{{ setup.structure_cache_file_path }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "FT Website Structure DB",
+        "label": "FT Website Structure DB"
+      }
+    },
+    {
+      "id": "analyze_sitemap",
+      "nodeType": "seo.sitemap.analyze",
+      "position": {
+        "x": -838,
+        "y": 121
+      },
+      "zIndex": 0,
+      "inputs": {
+        "sitemap_url": "https://flows.trading/sitemap.xml",
+        "fetch_content": true,
+        "max_pages": 200
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Analyze Sitemap"
+      }
+    },
+    {
+      "id": "structure_site",
+      "nodeType": "seo.sitemap.structure",
+      "position": {
+        "x": -590,
+        "y": 120
+      },
+      "zIndex": 0,
+      "inputs": {
+        "pages": "{{ analyze_sitemap.pages }}",
+        "site_name": "Flows Trading",
+        "max_pillars": 8,
+        "scrape_pages": true,
+        "max_pages_to_scrape": 50,
+        "max_topics_per_page": 8,
+        "min_topic_similarity": 0.3,
+        "max_topics_after_reduction": 100,
+        "cluster_cohesion_threshold": 0.5,
+        "min_cluster_size": 2,
+        "assignment_margin": 0.1,
+        "min_child_support": 0.1
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Structure Site (Improved Topical Clustering)"
+      }
+    },
+    {
+      "id": "save_structure",
+      "nodeType": "storage.write",
+      "position": {
+        "x": -365,
+        "y": 110
+      },
+      "zIndex": 0,
+      "inputs": {
+        "key": "site_structure_flows",
+        "value": "{{ structure_site.site_structure }}",
+        "expiration_minutes": 2880.0
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Save Structure to Cache"
+      }
+    },
+    {
+      "id": "suggest_links",
+      "nodeType": "seo.links.suggest",
+      "position": {
+        "x": 121,
+        "y": 123
+      },
+      "zIndex": 0,
+      "inputs": {
+        "article_topic": "{{ setup.topic }}",
+        "article_content": "",
+        "site_structure": "{{ core_firstof.value }}",
+        "max_links": 8,
+        "min_relevance": "medium",
+        "parent_pillar_url": "{{ setup.parent_pillar_url }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Suggest Internal Links"
+      }
+    },
+    {
+      "id": "llm_model_2",
+      "nodeType": "ai.llm.model.openai",
+      "position": {
+        "x": 483,
+        "y": 406
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_llmstudio_001",
+        "model": "",
+        "max_tokens": 8000,
+        "temperature": 0.7,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "LLM Model",
+        "name": "llm_model_2",
+        "label": "LLM Model"
+      }
+    },
+    {
+      "id": "content_humanizer",
+      "nodeType": "content.tool.humanizer",
+      "position": {
+        "x": 636,
+        "y": 406
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_llmstudio_001",
+        "tone": "professional",
+        "preserve_length": false
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Content Humanizer",
+        "label": "Content Humanizer"
+      }
+    },
+    {
+      "id": "imagegen_model_1",
+      "nodeType": "imagegen.model",
+      "position": {
+        "x": 1132,
+        "y": 330
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_openai_001",
+        "model": "dall-e-3",
+        "quality": "standard",
+        "style": "vivid"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "OpenAI Image Gen Model",
+        "name": "imagegen_model_1",
+        "label": "OpenAI Image Gen Model"
+      }
+    },
+    {
+      "id": "forms_channel",
+      "nodeType": "ai.interactions.forms",
+      "position": {
+        "x": -1700,
+        "y": 50
+      },
+      "zIndex": 0,
+      "inputs": {
+        "channel_type": "forms",
+        "respondent": "",
+        "timeout_minutes": 0
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Forms Channel",
+        "label": "Forms Channel"
+      }
+    },
+    {
+      "id": "collect_params",
+      "nodeType": "interaction.form",
+      "position": {
+        "x": -1650,
+        "y": -171
+      },
+      "zIndex": 0,
+      "inputs": {
+        "title": "Article Parameters",
+        "description": "Provide the main parameters for the SEO article to generate.",
+        "fields": "[{\"name\":\"topic\",\"label\":\"Article topic\",\"type\":\"Text\",\"required\":true,\"hint\":\"Short subject of the article (e.g. order flow trading)\"},{\"name\":\"brief\",\"label\":\"Content brief\",\"type\":\"MultilineText\",\"required\":false,\"hint\":\"Detailed editorial direction: angle, scope, key points to cover, what to avoid (leave empty for fully autonomous generation)\"},{\"name\":\"audience\",\"label\":\"Target audience\",\"type\":\"Text\",\"required\":true,\"defaultValue\":\"beginner\"},{\"name\":\"tone\",\"label\":\"Writing tone\",\"type\":\"Text\",\"required\":false,\"defaultValue\":\"\",\"hint\":\"e.g. educational, expert, accessible, professional (leave empty for auto-detection from SEO strategy)\"},{\"name\":\"article_type\",\"label\":\"Article type\",\"type\":\"Choice\",\"required\":false,\"defaultValue\":\"\",\"hint\":\"Leave empty for auto-detection\",\"options\":[\"\",\"how_to\",\"guide\",\"explainer\",\"listicle\",\"comparison\",\"case_study\",\"reference\"]},{\"name\":\"keywords\",\"label\":\"SEO keywords\",\"type\":\"Text\",\"required\":false,\"hint\":\"Comma-separated list of target keywords (leave empty for auto-detection)\"},{\"name\":\"seo_goals\",\"label\":\"SEO goals\",\"type\":\"Text\",\"required\":false,\"hint\":\"Specific SEO objectives for this article\"},{\"name\":\"word_count\",\"label\":\"Target word count\",\"type\":\"Text\",\"required\":false,\"defaultValue\":\"\",\"hint\":\"Target word count (leave empty for automatic estimation based on topic)\"},{\"name\":\"site_url\",\"label\":\"Website URL\",\"type\":\"Text\",\"required\":true,\"defaultValue\":\"https://flows.trading\"},{\"name\":\"parent_pillar_url\",\"label\":\"Parent pillar page URL\",\"type\":\"Text\",\"required\":false,\"hint\":\"URL of the parent pillar page\"},{\"name\":\"publish_status\",\"label\":\"Publication status\",\"type\":\"Choice\",\"required\":true,\"defaultValue\":\"draft\",\"options\":[\"draft\",\"publish\",\"pending\"]}]"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Collect Article Parameters",
+        "label": "Collect Parameters"
+      }
+    },
+    {
+      "id": "setup",
+      "nodeType": "core.set",
+      "position": {
+        "x": -1399,
+        "y": -182
+      },
+      "zIndex": 0,
+      "inputs": {
+        "topic": "{{ collect_params.response_data.topic }}",
+        "brief": "{{ collect_params.response_data.brief }}",
+        "audience": "{{ collect_params.response_data.audience }}",
+        "tone": "{{ collect_params.response_data.tone }}",
+        "article_type": "{{ collect_params.response_data.article_type }}",
+        "keywords": "{{ collect_params.response_data.keywords }}",
+        "seo_goals": "{{ collect_params.response_data.seo_goals }}",
+        "word_count": "{{ collect_params.response_data.word_count }}",
+        "site_url": "{{ collect_params.response_data.site_url }}",
+        "parent_pillar_url": "{{ collect_params.response_data.parent_pillar_url }}",
+        "publish_status": "{{ collect_params.response_data.publish_status }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Setup",
+        "setFields": [
+          {
+            "key": "seo_constraints",
+            "type": "Text",
+            "label": "SEO constraints",
+            "value": "Avoid overly promotional language.",
+            "editorMode": "fixed"
+          },
+          {
+            "key": "promo_title",
+            "type": "Text",
+            "label": "Promotion title",
+            "value": "Ready to start trading?",
+            "editorMode": "fixed"
+          },
+          {
+            "key": "promo_text",
+            "type": "Text",
+            "label": "Promotional content",
+            "value": "Join thousands of traders using our platform.",
+            "editorMode": "fixed"
+          },
+          {
+            "key": "promo_button_label",
+            "type": "Text",
+            "label": "Promo button - Text",
+            "value": "Get Started",
+            "editorMode": "fixed"
+          },
+          {
+            "key": "structure_cache_file_path",
+            "type": "Text",
+            "label": "Structure cache file path",
+            "required": true,
+            "value": "C:/Dev/_flows_trading_marketing/_cache/flows_trading_structure.json",
+            "editorMode": "fixed"
+          },
+          {
+            "key": "structure_cache_max_age_minutes",
+            "type": "number",
+            "label": "Structure cache max age (minutes)",
+            "required": true,
+            "value": 1440,
+            "editorMode": "fixed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "article_seo_plan",
+      "nodeType": "content.articles.article_seo_advisor",
+      "position": {
+        "x": 359,
+        "y": 120
+      },
+      "zIndex": 0,
+      "inputs": {
+        "topic": "{{ setup.topic }}",
+        "brief": "{{ setup.brief }}",
+        "audience": "{{ setup.audience }}",
+        "seo_goals": "{{ setup.seo_goals }}",
+        "seo_constraints": "{{ setup.seo_constraints }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "SEO Strategy"
+      }
+    },
+    {
+      "id": "article_write",
+      "nodeType": "content.articles.article_writer",
+      "position": {
+        "x": 598,
+        "y": 118
+      },
+      "zIndex": 0,
+      "inputs": {
+        "simulation": false,
+        "draft_mode": false,
+        "article_title": "{{ article_seo_plan.article_title }}",
+        "topic": "{{ setup.topic }}",
+        "brief": "{{ setup.brief }}",
+        "audience": "{{ setup.audience }}",
+        "meta_description": "{{ article_seo_plan.meta_description }}",
+        "meta_tags": "{{ article_seo_plan.meta_tags }}",
+        "word_count": "{{ setup.word_count }}",
+        "seo_strategy": "{{ article_seo_plan.seo_strategy }}",
+        "suggested_links": "{{ suggest_links.suggested_links }}",
+        "tone": "{{ setup.tone }}",
+        "article_type": "{{ setup.article_type }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Write Article"
+      }
+    },
+    {
+      "id": "feature_image",
+      "nodeType": "ai.media.ai_image_gen",
+      "position": {
+        "x": 1145,
+        "y": 129
+      },
+      "zIndex": 0,
+      "inputs": {
+        "simulation": false,
+        "instructions": "{{ article_write.featured_image_prompt.prompt }}",
+        "context": "{{ article_seo_plan.article_title }}",
+        "size": "{{ article_write.featured_image_prompt.desired_size }}",
+        "mode": "thumbnail"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Generate Featured Image"
+      }
+    },
+    {
+      "id": "upload_featured_image",
+      "nodeType": "app.cms.wordpress.publish_media",
+      "position": {
+        "x": 1378,
+        "y": 121
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_wordpress_001",
+        "image": "{{ feature_image.image }}",
+        "filename": "featured_{{ article_seo_plan.article_title }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Upload Featured Image"
+      }
+    },
+    {
+      "id": "foreach_images",
+      "nodeType": "core.foreach",
+      "position": {
+        "x": 1267,
+        "y": -304
+      },
+      "zIndex": 0,
+      "inputs": {
+        "collection": "{{ article_write.image_prompts }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "For Each Image"
+      }
+    },
+    {
+      "id": "generate_content_image",
+      "nodeType": "ai.media.ai_image_gen",
+      "position": {
+        "x": 1693,
+        "y": -322
+      },
+      "zIndex": 0,
+      "inputs": {
+        "simulation": false,
+        "instructions": "{{ foreach_images.current_item.prompt }}",
+        "context": "{{ foreach_images.current_item.section_title }}",
+        "size": "{{ foreach_images.current_item.desired_size }}",
+        "mode": "article"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Generate Content Image"
+      }
+    },
+    {
+      "id": "publish_content_image",
+      "nodeType": "app.cms.wordpress.publish_media",
+      "position": {
+        "x": 1937,
+        "y": -318
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_wordpress_001",
+        "image": "{{ generate_content_image.image }}",
+        "filename": "content_{{ foreach_images.current_item.image_id }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Publish Content Image"
+      }
+    },
+    {
+      "id": "store_image_mapping",
+      "nodeType": "core.datatable",
+      "position": {
+        "x": 2175,
+        "y": -311
+      },
+      "zIndex": 0,
+      "inputs": {
+        "table": "images_mappings",
+        "operation": "insert",
+        "data": {
+          "image_id": "{{ foreach_images.current_item.image_id }}",
+          "section_title": "{{ foreach_images.current_item.section_title }}",
+          "media_id": "{{ publish_content_image.media.mediaId }}",
+          "media_url": "{{ publish_content_image.media.mediaUrl }}"
+        }
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Store Image Mapping"
+      }
+    },
+    {
+      "id": "design_layout",
+      "nodeType": "content.articles.article_layout_designer",
+      "position": {
+        "x": 1702,
+        "y": 153
+      },
+      "zIndex": 0,
+      "inputs": {
+        "title": "{{ article_seo_plan.article_title }}",
+        "article_sections": "{{ article_write.article_sections }}",
+        "toc": true
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Design Layout"
+      }
+    },
+    {
+      "id": "generate_learning_section",
+      "nodeType": "content.content_generator",
+      "position": {
+        "x": 1145,
+        "y": 568
+      },
+      "zIndex": 0,
+      "inputs": {
+        "content_description": "Generate a \u0027Continue Learning\u0027 section for an article titled \r\n\u0027{{ article_seo_plan.article_title }}\u0027\r\ntargeting {{ setup.audience }}.\r\n\r\nContext:\r\n- Current article topic (specific concept): {{ setup.topic }}\r\n- This section MUST move to higher-level concepts.\r\n- Do NOT suggest subtopics, refinements, or variations of the current topic.\r\n- Always move up at least ONE abstraction level.\r\n\r\nAbstraction examples (move UP, never sideways):\r\n- try/catch \u2192 Error Handling \u2192 Software Reliability\r\n- Overfitting \u2192 Model Evaluation \u2192 Machine Learning Lifecycle\r\n- Meta title optimization \u2192 On-page SEO \u2192 SEO Strategy\r\n- Button color choice \u2192 UI Design \u2192 User Experience\r\n\r\nRequirements:\r\n\r\n1) Introduction  \r\nBriefly explain how this specific topic fits into a broader learning journey and why higher-level concepts matter.\r\n\r\n2) Related topics (3\u20134 items)  \r\nSuggest broader, foundational concepts learners should study next.\r\nEach item includes:\r\n- A clear educational title\r\n- One sentence explaining its importance\r\n\r\nAvoid:\r\n- Same-level topics\r\n- Subtopics of the article\r\n- Advanced edge cases of the same concept\r\n\r\n3) Apply with Flows  \r\nExplain how learners can apply these broader concepts using the Flows platform, mentioning:\r\n- Journaling\r\n- Tracking progress\r\n- Behavioral or performance analysis\r\n- Reviewing patterns across multiple cases\r\n\r\n4) Further learning  \r\nPoint to relevant platform features or documentation that support higher-level understanding.\r\n\r\n5) Pillar page link  \r\nIf a parent pillar page URL is provided below, include at least one natural link to it, framed as the next logical step in the reader\u0027s learning journey (e.g. \u0027To explore the full picture, see our comprehensive guide on [topic]\u0027).\r\nPillar page URL: {{ setup.parent_pillar_url }}\r\nIf the URL is empty, skip this requirement entirely.\r\n\r\nTone:\r\nEducational, structured, long-term oriented.",
+        "tone": "educational",
+        "word_count": 300,
+        "structure_hints": [
+          "Introduction paragraph",
+          "Related articles section with list",
+          "Apply with Flows section with benefits",
+          "Further reading links"
+        ],
+        "links": "{{ suggest_links.suggested_links }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Generate Learning Section"
+      }
+    },
+    {
+      "id": "add_learning_section",
+      "nodeType": "layout.add_block",
+      "position": {
+        "x": 1930,
+        "y": 155
+      },
+      "zIndex": 0,
+      "inputs": {
+        "layout": "{{ design_layout.layout_data }}",
+        "target": "main",
+        "position": "append",
+        "block": "[\n  {\n    \u0022type\u0022: \u0022block\u0022,\n    \u0022id\u0022: \u0022learning_more\u0022,\n    \u0022variant\u0022: \u0022highlight\u0022,\n    \u0022children\u0022: [\n      {\n        \u0022type\u0022: \u0022text\u0022,\n        \u0022content\u0022: \u0022{{ generate_learning_section.dsl_content }}\u0022,\n        \u0022variant\u0022: \u0022default\u0022\n      }\n    ]\n  },\n  {\n    \u0022type\u0022: \u0022spacer\u0022,\n    \u0022id\u0022: \u0022title_spacer\u0022,\n    \u0022variant\u0022: \u0022default\u0022\n  }\n]"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Add Learning Section"
+      }
+    },
+    {
+      "id": "layout_add_cta",
+      "nodeType": "layout.add_block",
+      "position": {
+        "x": 2177,
+        "y": 158
+      },
+      "zIndex": 0,
+      "inputs": {
+        "layout": "{{ add_learning_section.layout }}",
+        "target": "main",
+        "position": "append",
+        "block": {
+          "type": "block",
+          "id": "promo",
+          "variant": "accent",
+          "children": [
+            {
+              "type": "heading",
+              "level": 2,
+              "text": "{{ setup.promo_title }}",
+              "variant": "centered_black"
+            },
+            {
+              "type": "text",
+              "content": "{{ setup.promo_text }}",
+              "variant": "centered"
+            },
+            {
+              "type": "button",
+              "variant": "primary",
+              "label": "{{ setup.promo_button_label }}",
+              "url": "{{ setup.site_url }}"
+            }
+          ]
+        }
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Add Promo Block"
+      }
+    },
+    {
+      "id": "get_image_mappings",
+      "nodeType": "core.datatable",
+      "position": {
+        "x": 2664,
+        "y": 162
+      },
+      "zIndex": 0,
+      "inputs": {
+        "table": "images_mappings",
+        "operation": "select"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Get Image Mappings"
+      }
+    },
+    {
+      "id": "layout_to_elementor",
+      "nodeType": "content.layoutadapters.dsl_to_elementor",
+      "position": {
+        "x": 2895,
+        "y": 159
+      },
+      "zIndex": 0,
+      "inputs": {
+        "dsl_content": "{{ layout_add_title.layout }}",
+        "title": "{{ article_seo_plan.article_title }}",
+        "image_mappings": "{{ get_image_mappings.rows }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Convert to Elementor"
+      }
+    },
+    {
+      "id": "publish_article",
+      "nodeType": "wordpress.publish",
+      "position": {
+        "x": 3176,
+        "y": 154
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_wordpress_001",
+        "title": "{{ article_seo_plan.article_title }}",
+        "metaTags": "{{ article_seo_plan.meta_tags }}",
+        "metaDescription": "{{ article_seo_plan.meta_description }}",
+        "status": "{{ setup.publish_status }}",
+        "elementorData": "{{ layout_to_elementor.elementor_data }}",
+        "featuredMediaId": "{{ upload_featured_image.media.mediaId }}",
+        "updateFeaturedImage": true
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Publish to WordPress"
+      }
+    },
+    {
+      "id": "layout_add_title",
+      "nodeType": "layout.add_block",
+      "position": {
+        "x": 2412,
+        "y": 161
+      },
+      "zIndex": 0,
+      "inputs": {
+        "target": "main",
+        "position": "prepend",
+        "block": [
+          {
+            "type": "block",
+            "id": "title",
+            "variant": "ft_title",
+            "children": [
+              {
+                "type": "heading",
+                "level": 1,
+                "text": "{{ article_seo_plan.article_title }}",
+                "variant": "centered_white"
+              }
+            ]
+          },
+          {
+            "type": "spacer",
+            "id": "title_spacer",
+            "variant": "default"
+          }
+        ],
+        "layout": "{{ layout_add_cta.layout }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Layout Add Title",
+        "label": "Layout Add Title",
+        "name": "layout_add_title"
+      }
+    },
+    {
+      "id": "llm_model_1",
+      "nodeType": "ai.llm.model.openai",
+      "position": {
+        "x": -718,
+        "y": 372
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_llmstudio_001",
+        "model": "",
+        "max_tokens": 8000,
+        "temperature": 0.7,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "LLM Model",
+        "name": "llm_model_1",
+        "label": "LLM Model"
+      }
+    },
+    {
+      "id": "imagegen_model_2",
+      "nodeType": "imagegen.model",
+      "position": {
+        "x": 1701,
+        "y": -101
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_openai_001",
+        "model": "dall-e-3",
+        "quality": "standard",
+        "style": "vivid"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "OpenAI Image Gen Model",
+        "name": "imagegen_model_2",
+        "label": "OpenAI Image Gen Model"
+      }
+    },
+    {
+      "id": "resource_llm_memory",
+      "nodeType": "ai.memory.simple",
+      "position": {
+        "x": -621,
+        "y": 381
+      },
+      "zIndex": 0,
+      "inputs": {
+        "mode": "local_clustering",
+        "max_clusters": 30
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "LLM Memory",
+        "label": "LLM Memory"
+      }
+    },
+    {
+      "id": "llm_memory_simple",
+      "nodeType": "ai.memory.simple",
+      "position": {
+        "x": 247,
+        "y": 405
+      },
+      "zIndex": 1,
+      "inputs": {},
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "LLM Memory",
+        "label": "LLM Memory"
+      }
+    },
+    {
+      "id": "llm_model_2_2",
+      "nodeType": "ai.llm.model.openai",
+      "position": {
+        "x": 1142,
+        "y": 818
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_llmstudio_001",
+        "model": "",
+        "max_tokens": 8000,
+        "temperature": 0.7,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "LLM Model",
+        "name": "llm_model_2",
+        "label": "LLM Model"
+      }
+    },
+    {
+      "id": "llm_model_2_3",
+      "nodeType": "ai.llm.model.openai",
+      "position": {
+        "x": 126,
+        "y": 399
+      },
+      "zIndex": 0,
+      "inputs": {
+        "credentials": "cred_llmstudio_001",
+        "model": "",
+        "max_tokens": 8000,
+        "temperature": 0.7,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "LLM Model",
+        "name": "llm_model_2",
+        "label": "LLM Model"
+      }
+    },
+    {
+      "id": "storage_read",
+      "nodeType": "storage.read",
+      "position": {
+        "x": -1138,
+        "y": -182
+      },
+      "zIndex": 2,
+      "inputs": {
+        "key": "site_structure_flows"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Storage Read"
+      }
+    },
+    {
+      "id": "file_storage_2",
+      "nodeType": "storage.file",
+      "position": {
+        "x": -361,
+        "y": 358
+      },
+      "zIndex": 0,
+      "inputs": {
+        "file_path": "{{ setup.structure_cache_file_path }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "FT Website Structure DB",
+        "label": "FT Website Structure DB"
+      }
+    },
+    {
+      "id": "core_firstof",
+      "nodeType": "core.firstof",
+      "position": {
+        "x": -122,
+        "y": 115
+      },
+      "zIndex": 3,
+      "inputs": {
+        "value1": "{{ storage_read.value }}",
+        "value2": "{{ save_structure.value }}"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "First Of"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": "analyze_sitemap",
+      "fromPort": "out",
+      "to": "structure_site",
+      "toPort": "in"
+    },
+    {
+      "from": "structure_site",
+      "fromPort": "out",
+      "to": "save_structure",
+      "toPort": "in"
+    },
+    {
+      "from": "llm_model_1",
+      "fromPort": "resource",
+      "to": "structure_site",
+      "toPort": "llm_model"
+    },
+    {
+      "from": "scraper_direct",
+      "fromPort": "resource",
+      "to": "structure_site",
+      "toPort": "scraper"
+    },
+    {
+      "from": "resource_llm_memory",
+      "fromPort": "resource",
+      "to": "structure_site",
+      "toPort": "llm_memory"
+    },
+    {
+      "from": "llm_memory_simple",
+      "fromPort": "resource",
+      "to": "suggest_links",
+      "toPort": "llm_memory"
+    },
+    {
+      "from": "suggest_links",
+      "fromPort": "out",
+      "to": "article_seo_plan",
+      "toPort": "in"
+    },
+    {
+      "from": "llm_model_2",
+      "fromPort": "resource",
+      "to": "article_seo_plan",
+      "toPort": "llm_model"
+    },
+    {
+      "from": "article_write",
+      "fromPort": "out",
+      "to": "feature_image",
+      "toPort": "in"
+    },
+    {
+      "from": "imagegen_model_2",
+      "fromPort": "resource",
+      "to": "generate_content_image",
+      "toPort": "imagegen_model"
+    },
+    {
+      "from": "imagegen_model_1",
+      "fromPort": "resource",
+      "to": "feature_image",
+      "toPort": "imagegen_model"
+    },
+    {
+      "from": "article_seo_plan",
+      "fromPort": "out",
+      "to": "article_write",
+      "toPort": "in"
+    },
+    {
+      "from": "llm_model_2",
+      "fromPort": "resource",
+      "to": "article_write",
+      "toPort": "llm_model"
+    },
+    {
+      "from": "content_humanizer",
+      "fromPort": "resource",
+      "to": "article_write",
+      "toPort": "tools"
+    },
+    {
+      "from": "article_write",
+      "fromPort": "out",
+      "to": "foreach_images",
+      "toPort": "in"
+    },
+    {
+      "from": "foreach_images",
+      "fromPort": "loop",
+      "to": "generate_content_image",
+      "toPort": "in"
+    },
+    {
+      "from": "generate_content_image",
+      "fromPort": "out",
+      "to": "publish_content_image",
+      "toPort": "in"
+    },
+    {
+      "from": "publish_content_image",
+      "fromPort": "out",
+      "to": "store_image_mapping",
+      "toPort": "in"
+    },
+    {
+      "from": "foreach_images",
+      "fromPort": "out",
+      "to": "design_layout",
+      "toPort": "in"
+    },
+    {
+      "from": "design_layout",
+      "fromPort": "out",
+      "to": "add_learning_section",
+      "toPort": "in"
+    },
+    {
+      "from": "add_learning_section",
+      "fromPort": "out",
+      "to": "layout_add_cta",
+      "toPort": "in"
+    },
+    {
+      "from": "get_image_mappings",
+      "fromPort": "out",
+      "to": "layout_to_elementor",
+      "toPort": "in"
+    },
+    {
+      "from": "layout_to_elementor",
+      "fromPort": "out",
+      "to": "publish_article",
+      "toPort": "in"
+    },
+    {
+      "from": "layout_add_cta",
+      "fromPort": "out",
+      "to": "layout_add_title",
+      "toPort": "in"
+    },
+    {
+      "from": "layout_add_title",
+      "fromPort": "out",
+      "to": "get_image_mappings",
+      "toPort": "in"
+    },
+    {
+      "from": "upload_featured_image",
+      "fromPort": "out",
+      "to": "design_layout",
+      "toPort": "in"
+    },
+    {
+      "from": "feature_image",
+      "fromPort": "out",
+      "to": "upload_featured_image",
+      "toPort": "in"
+    },
+    {
+      "from": "article_write",
+      "fromPort": "out",
+      "to": "generate_learning_section",
+      "toPort": "in"
+    },
+    {
+      "from": "llm_model_2_2",
+      "fromPort": "resource",
+      "to": "generate_learning_section",
+      "toPort": "llm_model"
+    },
+    {
+      "from": "generate_learning_section",
+      "fromPort": "out",
+      "to": "add_learning_section",
+      "toPort": "in"
+    },
+    {
+      "from": "llm_model_2_3",
+      "fromPort": "resource",
+      "to": "suggest_links",
+      "toPort": "llm_model"
+    },
+    {
+      "from": "file_storage",
+      "fromPort": "resource",
+      "to": "storage_read",
+      "toPort": "storage"
+    },
+    {
+      "from": "file_storage_2",
+      "fromPort": "resource",
+      "to": "save_structure",
+      "toPort": "storage"
+    },
+    {
+      "from": "save_structure",
+      "fromPort": "out",
+      "to": "core_firstof",
+      "toPort": "input2"
+    },
+    {
+      "from": "storage_read",
+      "fromPort": "found",
+      "to": "core_firstof",
+      "toPort": "input1"
+    },
+    {
+      "from": "storage_read",
+      "fromPort": "not_found",
+      "to": "analyze_sitemap",
+      "toPort": "in"
+    },
+    {
+      "from": "core_firstof",
+      "fromPort": "out",
+      "to": "suggest_links",
+      "toPort": "in"
+    },
+    {
+      "from": "setup",
+      "fromPort": "out",
+      "to": "storage_read",
+      "toPort": "in"
+    },
+    {
+      "from": "forms_channel",
+      "fromPort": "resource",
+      "to": "collect_params",
+      "toPort": "channel"
+    },
+    {
+      "from": "collect_params",
+      "fromPort": "out",
+      "to": "setup",
+      "toPort": "in"
+    }
+  ],
+  "metadata": {
+    "version": 8,
+    "source": "",
+    "description": "Complete SEO article workflow with generic layout DSL and composable blocks.",
+    "editorViewport": {
+      "x": 1108.2870737509913,
+      "y": 539.3068992862807,
+      "zoom": 0.6225218080888184
+    }
+  },
+  "dataTables": {
+    "images_mappings": {
+      "columns": [
+        {
+          "name": "image_id",
+          "type": "Text",
+          "required": true
+        },
+        {
+          "name": "section_title",
+          "type": "Text",
+          "required": false
+        },
+        {
+          "name": "media_id",
+          "type": "Text",
+          "required": false
+        },
+        {
+          "name": "media_url",
+          "type": "Text",
+          "required": false
+        }
+      ],
+      "rows": []
+    }
+  },
+  "annotations": [
+    {
+      "id": "annotation_scraper",
+      "position": {
+        "x": -626,
+        "y": 514
+      },
+      "size": {
+        "width": 331.8433471033364,
+        "height": 349.54574861198836
+      },
+      "content": "#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n#\n# Web Scraper Resource\n\nThe scraper enriches pages with:\n- Title, H1, Meta Description\n- Internal links count (key for pillar detection)\n- First paragraph excerpt\n\nThis dramatically improves structure accuracy.",
+      "color": "#047857",
+      "locked": false,
+      "zIndex": -1
+    },
+    {
+      "id": "annotation_seo",
+      "position": {
+        "x": 93,
+        "y": -2
+      },
+      "size": {
+        "width": 454.59758092551647,
+        "height": 320.955367134056
+      },
+      "content": "# SEO Analysis",
+      "color": "#1F2937",
+      "locked": false,
+      "zIndex": -1
+    },
+    {
+      "id": "annotation_1",
+      "position": {
+        "x": -671,
+        "y": -579
+      },
+      "size": {
+        "width": 571.1036931210301,
+        "height": 380.15511770516895
+      },
+      "content": "# SEO Blog Automation\r\n\r\nThis workflow helps you create and publish high-quality SEO articles\r\nwithout lifting a finger. Just define your topic and preferences,\r\nand let the automation write, illustrate, and publish your content\r\ndirectly to your WordPress site.\r\n\r\nIt takes care of generating a well-structured article,\r\ncreating multiple AI images, and publishing everything for you.\r\n\r\n### Credentials Requirements\r\n\r\n- An AI provider (OpenAI, LM Studio, etc.)\r\n- An OpenAI API key for image generation\r\n- WordPress credentials\r\n\r\n### Setup\r\n\r\nAll main instructions are configured in the **Set** node\r\n(topic, keywords, tone, number of images, publish mode).",
+      "color": "#3849B8",
+      "locked": false,
+      "zIndex": -1
+    },
+    {
+      "id": "annotation_2",
+      "position": {
+        "x": 580,
+        "y": 6
+      },
+      "size": {
+        "width": 225.96107821980775,
+        "height": 321.7343050326979
+      },
+      "content": "## Write Article\nUse the DRAFT mode for faster content (lowest quality content). Use it for testing.",
+      "color": "#1F2937",
+      "locked": false,
+      "zIndex": -1
+    },
+    {
+      "id": "annotation_5",
+      "position": {
+        "x": 1662,
+        "y": 83
+      },
+      "size": {
+        "width": 1428.7601866805762,
+        "height": 279.80775893787455
+      },
+      "content": "## Generate Page Layout",
+      "color": "#4B5563",
+      "locked": false,
+      "zIndex": -1
+    },
+    {
+      "id": "annotation_learning",
+      "position": {
+        "x": 1340,
+        "y": 661
+      },
+      "size": {
+        "width": 426.115923566879,
+        "height": 302.943949044586
+      },
+      "content": "## Continue Learning Section\n\nAutomatically generates a contextual \u0027Continue Learning\u0027 section using ContentGeneratorNode:\n- Related articles suggestions\n- How to apply concepts with Flows\n- Links to relevant features\n\n**Optimized for context limits:**\nUses only title, topic, and audience (no full article content) to avoid LLM context overflow.\nThis keeps prompt size ~500 tokens instead of 8400\u002B.\n\nInserted before the promo block for better user engagement.",
+      "color": "#7C3AED",
+      "locked": false,
+      "zIndex": -1
+    },
+    {
+      "id": "annotation_7",
+      "position": {
+        "x": -858,
+        "y": 6
+      },
+      "size": {
+        "width": 683.7278337863605,
+        "height": 317.92019250273836
+      },
+      "content": "# Web site Analysis",
+      "color": "#1F2937",
+      "locked": false,
+      "zIndex": -1
+    }
+  ]
+}

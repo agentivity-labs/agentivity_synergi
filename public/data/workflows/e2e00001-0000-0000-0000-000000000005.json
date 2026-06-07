@@ -1,0 +1,87 @@
+{
+  "id": "e2e00001-0000-0000-0000-000000000005",
+  "name": "E2E - Forms - Collect and Review",
+  "description": "",
+  "entryNode": "",
+  "version": 0,
+  "updatedAt": "2026-05-30T18:17:40.9840978+00:00",
+  "nodes": [
+    {
+      "id": "forms_channel",
+      "nodeType": "ai.interactions.forms",
+      "position": {
+        "x": 200,
+        "y": 400
+      },
+      "zIndex": 0,
+      "inputs": {
+        "channel_type": "forms",
+        "respondent": "E2E Tester",
+        "timeout_minutes": 5
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Forms Channel"
+      }
+    },
+    {
+      "id": "collect_data",
+      "nodeType": "interaction.form",
+      "position": {
+        "x": 500,
+        "y": 200
+      },
+      "zIndex": 0,
+      "inputs": {
+        "title": "Step 1 \u2014 Enter data",
+        "description": "Provide test input.",
+        "fields": "[{\u0022name\u0022:\u0022input_value\u0022,\u0022label\u0022:\u0022Input value\u0022,\u0022type\u0022:\u0022Text\u0022,\u0022required\u0022:true,\u0022hint\u0022:\u0022Any string\u0022}]"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Collect Form"
+      }
+    },
+    {
+      "id": "review_data",
+      "nodeType": "interaction.form",
+      "position": {
+        "x": 800,
+        "y": 200
+      },
+      "zIndex": 0,
+      "inputs": {
+        "title": "Step 2 \u2014 Confirm",
+        "description": "You entered: {{ collect_data.response_data.input_value }}. Please confirm.",
+        "fields": "[{\u0022name\u0022:\u0022confirmed\u0022,\u0022label\u0022:\u0022Confirmed\u0022,\u0022type\u0022:\u0022Boolean\u0022,\u0022required\u0022:true}]"
+      },
+      "inputsMetadata": {},
+      "metadata": {
+        "displayName": "Review Form"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": "collect_data",
+      "fromPort": "out",
+      "to": "review_data",
+      "toPort": "in"
+    },
+    {
+      "from": "forms_channel",
+      "fromPort": "resource",
+      "to": "collect_data",
+      "toPort": "channel"
+    },
+    {
+      "from": "forms_channel",
+      "fromPort": "resource",
+      "to": "review_data",
+      "toPort": "channel"
+    }
+  ],
+  "metadata": {},
+  "dataTables": {},
+  "annotations": []
+}
