@@ -52,6 +52,7 @@ export default function CanvasRenderer({ dataPath, renderer, kind, simulate = fa
         instance.loadData(data)
         instance.simulate = simulate
       } else {
+        // @ts-expect-error - plain IIFE script, no module exports
         await import('./agentivity-canvas-workflow.js')
         const Wc = (window as any).AgentivityWorkflowCanvas
         if (!Wc || destroyed) return
