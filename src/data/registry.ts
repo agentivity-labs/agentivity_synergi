@@ -1,5 +1,10 @@
-import fs from 'fs'
-import path from 'path'
+// Template catalog — sourced from the Agentivity Marketplace API, not local
+// files. Fetched at build time (this site is a static export — `output:
+// 'export'` in next.config.ts — so there is no per-request server to hit the
+// API live; the catalog is snapshotted whenever the site is rebuilt/redeployed).
+
+const MARKETPLACE_API_URL = process.env.MARKETPLACE_API_URL ?? 'https://marketplace.agentivity.io'
+const PAGE_SIZE = 100
 
 export type TemplateKind = 'agent' | 'team' | 'workflow'
 export type CanvasRenderer = 'team' | 'workflow'
@@ -16,119 +21,74 @@ export interface TemplateEntry {
   agentCount?: number
 }
 
-function cleanDepartment(folderName: string): string {
-  return folderName.replace(/ Dep$/, '').trim()
+interface MarketplaceTemplateSummary {
+  slug: string
+  name: string
+  description: string
+  department: string
+  kind: TemplateKind
+  canvas_renderer: CanvasRenderer
+  agent_count: number | null
 }
 
-function parseAgenticFile(filePath: string): Omit<TemplateEntry, 'department' | 'dataPath' | 'slug'> | null {
-  try {
-    const raw   = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
-    if (!raw.id || typeof raw.id !== 'string') return null
+interface MarketplaceListResponse {
+  data: MarketplaceTemplateSummary[]
+  meta: { total: number; limit: number; offset: number }
+}
 
-    const kind: TemplateKind = raw.kind === 'team' ? 'team' : 'agent'
-    const entry = typeof raw.entryJson === 'string' ? JSON.parse(raw.entryJson) : raw.entryJson
-
-    const name        = (entry?.name ?? entry?.team?.name ?? '').trim()
-    const description = (entry?.description ?? entry?.team?.description ?? entry?.goal ?? '').trim()
-    const agentCount  = kind === 'team' ? (entry?.members?.length ?? 0) : undefined
-
-    if (!name) return null
-
-    return { id: raw.id, name, description, kind, canvasRenderer: kind === 'team' ? 'team' : 'workflow', agentCount }
-  } catch {
-    return null
+function toTemplateEntry(row: MarketplaceTemplateSummary): TemplateEntry {
+  return {
+    // The marketplace's own id (slug) — same value used as both id and slug
+    // throughout this site, mirroring how the source entity files work (a
+    // team wrapper's only id lives at entryJson.id, there's no separate one).
+    id: row.slug,
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    department: row.department,
+    kind: row.kind,
+    canvasRenderer: row.canvas_renderer,
+    // .../raw returns `content` unwrapped — the exact { kind, name, entryJson }
+    // wrapper, fetchable client-side by the canvas renderer and downloadable
+    // as-is, same shape this site always worked with.
+    dataPath: `${MARKETPLACE_API_URL}/api/v1/templates/${encodeURIComponent(row.slug)}/raw`,
+    agentCount: row.agent_count ?? undefined,
   }
 }
 
-function parseWorkflowFile(filePath: string): Omit<TemplateEntry, 'department' | 'dataPath' | 'slug'> | null {
-  try {
-    const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
-    if (!raw.id || typeof raw.id !== 'string') return null
-    if (!raw.nodes || !Array.isArray(raw.nodes) || raw.nodes.length === 0) return null
-
-    // skip e2e test fixtures
-    const name = (raw.name ?? '').trim()
-    if (!name || name.startsWith('E2E') || name.startsWith('e2e')) return null
-
-    return { id: raw.id, name, description: (raw.description ?? '').trim(), kind: 'workflow', canvasRenderer: 'workflow' }
-  } catch {
-    return null
-  }
-}
-
-function urlEncodePath(...segments: string[]): string {
-  return segments.map(s => encodeURIComponent(s)).join('/')
-}
-
-export function buildRegistry(): TemplateEntry[] {
+async function fetchAllTemplates(): Promise<TemplateEntry[]> {
   const entries: TemplateEntry[] = []
-  const publicDir = path.join(process.cwd(), 'public', 'data')
+  let offset = 0
 
-  // --- agentic (agents + teams) ---
-  const agenticDir = path.join(publicDir, 'agentic')
-  if (fs.existsSync(agenticDir)) {
-    for (const deptFolder of fs.readdirSync(agenticDir)) {
-      const deptPath = path.join(agenticDir, deptFolder)
-      if (!fs.statSync(deptPath).isDirectory()) continue
-
-      const department = cleanDepartment(deptFolder)
-      for (const file of fs.readdirSync(deptPath)) {
-        if (!file.endsWith('.json')) continue
-        const parsed = parseAgenticFile(path.join(deptPath, file))
-        if (!parsed) continue
-
-        entries.push({
-          ...parsed,
-          slug:       parsed.id,
-          department,
-          dataPath:   `/data/agentic/${urlEncodePath(deptFolder)}/${encodeURIComponent(file)}`,
-        })
-      }
+  while (true) {
+    const url = `${MARKETPLACE_API_URL}/api/v1/templates?limit=${PAGE_SIZE}&offset=${offset}`
+    const res = await fetch(url)
+    if (!res.ok) {
+      throw new Error(`Marketplace API request failed (${res.status}): ${url}`)
     }
+    const body = (await res.json()) as MarketplaceListResponse
+    entries.push(...body.data.map(toTemplateEntry))
+
+    offset += PAGE_SIZE
+    if (offset >= body.meta.total) break
   }
 
-  // --- workflows ---
-  const workflowsDir = path.join(publicDir, 'workflows')
-  if (fs.existsSync(workflowsDir)) {
-    const scan = (dir: string, department: string) => {
-      for (const entry of fs.readdirSync(dir)) {
-        const fullPath = path.join(dir, entry)
-        if (fs.statSync(fullPath).isDirectory()) { scan(fullPath, entry); continue }
-        if (!entry.endsWith('.json')) continue
-
-        const parsed = parseWorkflowFile(fullPath)
-        if (!parsed) continue
-
-        const rel    = path.relative(path.join(publicDir, 'workflows'), fullPath)
-        const urlPath = '/data/workflows/' + rel.split(path.sep).map(encodeURIComponent).join('/')
-
-        entries.push({ ...parsed, slug: parsed.id, department, dataPath: urlPath })
-      }
-    }
-    scan(workflowsDir, 'General')
-  }
-
-  // deduplicate by dataPath (unique per file, more reliable than id)
-  const seen = new Set<string>()
-  return entries.filter(e => {
-    if (!e.id || !e.slug || !e.dataPath) return false
-    if (seen.has(e.dataPath)) return false
-    seen.add(e.dataPath)
-    return true
-  })
+  return entries
 }
 
-let _cache: TemplateEntry[] | null = null
-export function getRegistry(): TemplateEntry[] {
-  if (!_cache) _cache = buildRegistry()
+let _cache: Promise<TemplateEntry[]> | null = null
+export function getRegistry(): Promise<TemplateEntry[]> {
+  if (!_cache) _cache = fetchAllTemplates()
   return _cache
 }
 
-export function getTemplateBySlug(slug: string): TemplateEntry | undefined {
-  return getRegistry().find(t => t.slug === slug)
+export async function getTemplateBySlug(slug: string): Promise<TemplateEntry | undefined> {
+  const registry = await getRegistry()
+  return registry.find(t => t.slug === slug)
 }
 
-export function getDepartments(): string[] {
-  const deps = new Set(getRegistry().map(t => t.department))
+export async function getDepartments(): Promise<string[]> {
+  const registry = await getRegistry()
+  const deps = new Set(registry.map(t => t.department))
   return ['All', ...Array.from(deps).sort()]
 }

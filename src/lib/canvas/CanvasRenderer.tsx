@@ -57,8 +57,11 @@ export default function CanvasRenderer({ dataPath, renderer, kind, simulate = fa
         const Wc = (window as any).AgentivityWorkflowCanvas
         if (!Wc || destroyed) return
 
+        // Both agent and workflow files use the generic entity wrapper
+        // ({ kind, name, entryJson }) — agents nest their graph under entry.graph,
+        // workflows ARE the graph (entry.nodes/connections directly).
         let workflowData = data
-        if (kind === 'agent' && data.entryJson) {
+        if (data.entryJson) {
           const entry = typeof data.entryJson === 'string' ? JSON.parse(data.entryJson) : data.entryJson
           workflowData = entry.graph ?? entry
         }

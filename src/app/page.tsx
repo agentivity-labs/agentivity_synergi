@@ -1,9 +1,9 @@
 import { getRegistry, getDepartments } from '@/data/registry'
 import CatalogueGrid from '@/components/CatalogueGrid'
 
-export default function HomePage() {
-  const templates    = getRegistry()
-  const departments  = getDepartments()
+export default async function HomePage() {
+  const templates    = await getRegistry()
+  const departments  = await getDepartments()
 
   const teamCount     = templates.filter(t => t.kind === 'team').length
   const agentCount    = templates.filter(t => t.kind === 'agent').length

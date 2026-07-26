@@ -39,8 +39,18 @@ const _LOGO_LIGHT = _makeLogo('#152844');
 
 export const NODE_W = 140;
 export const NODE_H = 160;
-const H_GAP = 130;
-const V_GAP = 100;
+const H_GAP = 80;
+const V_GAP = 60;
+// Fixed graph-space origin every layout is centered on — mirrors
+// TeamLayoutEngine.dart's `_origin = Size(800, 600)`. Positions are computed in
+// this canonical space, NOT against the actual <canvas> pixel size, so a team's
+// layout is deterministic and annotations (authored in Team Studio against the
+// same fixed origin) land exactly where the user placed them relative to the
+// nodes — #fit() then scales this fixed-space content to whatever canvas size
+// is actually available, same as the workflow canvas already does for its own
+// (persisted, not recomputed) node positions.
+const ORIGIN_W = 800;
+const ORIGIN_H = 600;
 
 // Visual constants
 const DISC_R  = 92;   // disc radius (~12px halo around HEX_R=80)
@@ -130,9 +140,9 @@ export const ORCHESTRATOR_META = {
 
 // ─── Layout engine ────────────────────────────────────────────────────────────
 
-export function computeLayout(members, orchId, canvasW, canvasH) {
+export function computeLayout(members, orchId) {
   if (!members?.length) return {};
-  const cx = canvasW / 2, cy = canvasH / 2, out = {};
+  const cx = ORIGIN_W / 2, cy = ORIGIN_H / 2, out = {};
   switch (orchId) {
     case 'sequential':                    _seq(members, cx, cy, out);    break;
     case 'concurrent':                    _fan(members, cx, cy, out);    break;
@@ -147,20 +157,20 @@ export function computeLayout(members, orchId, canvasW, canvasH) {
 function _seq(m, cx, cy, o) {
   const tw = m.length * NODE_W + (m.length - 1) * H_GAP;
   const sx = cx - tw / 2;
-  m.forEach((s, i) => { o[s.slotId] = { x: sx + i*(NODE_W+H_GAP), y: cy - NODE_H/2 }; });
+  m.forEach((s, i) => { o[s.topologyPositionId] = { x: sx + i*(NODE_W+H_GAP), y: cy - NODE_H/2 }; });
 }
 function _fan(m, cx, cy, o) {
-  if (m.length === 1) { o[m[0].slotId] = { x: cx-NODE_W/2, y: cy-NODE_H/2 }; return; }
-  o[m[0].slotId] = { x: cx-NODE_W-H_GAP, y: cy-NODE_H/2 };
+  if (m.length === 1) { o[m[0].topologyPositionId] = { x: cx-NODE_W/2, y: cy-NODE_H/2 }; return; }
+  o[m[0].topologyPositionId] = { x: cx-NODE_W-H_GAP, y: cy-NODE_H/2 };
   const fan = m.slice(1), th = fan.length*NODE_H + (fan.length-1)*V_GAP;
   const sy = cy - th / 2;
-  fan.forEach((s, i) => { o[s.slotId] = { x: cx+H_GAP, y: sy + i*(NODE_H+V_GAP) }; });
+  fan.forEach((s, i) => { o[s.topologyPositionId] = { x: cx+H_GAP, y: sy + i*(NODE_H+V_GAP) }; });
 }
 function _grid(m, cx, cy, o) {
   const cols = 3, rows = Math.ceil(m.length / cols);
   const gW = cols*NODE_W + (cols-1)*H_GAP, gH = rows*NODE_H + (rows-1)*V_GAP;
   m.forEach((s, i) => {
-    o[s.slotId] = {
+    o[s.topologyPositionId] = {
       x: cx - gW/2 + (i % cols)*(NODE_W+H_GAP),
       y: cy - gH/2 + Math.floor(i / cols)*(NODE_H+V_GAP),
     };
@@ -170,14 +180,14 @@ function _circle(m, cx, cy, o) {
   const r = Math.max(140, (m.length*(NODE_W+H_GAP)) / (2*Math.PI) + 40);
   m.forEach((s, i) => {
     const a = 2*Math.PI*i/m.length - Math.PI/2;
-    o[s.slotId] = { x: cx + r*Math.cos(a) - NODE_W/2, y: cy + r*Math.sin(a) - NODE_H/2 };
+    o[s.topologyPositionId] = { x: cx + r*Math.cos(a) - NODE_W/2, y: cy + r*Math.sin(a) - NODE_H/2 };
   });
 }
 function _mgr(m, cx, cy, o) {
-  o[m[0].slotId] = { x: cx-NODE_W/2, y: cy-NODE_H-V_GAP*2 };
+  o[m[0].topologyPositionId] = { x: cx-NODE_W/2, y: cy-NODE_H-V_GAP*2 };
   const ws = m.slice(1); if (!ws.length) return;
   const tw = ws.length*NODE_W + (ws.length-1)*H_GAP;
-  ws.forEach((s, i) => { o[s.slotId] = { x: cx - tw/2 + i*(NODE_W+H_GAP), y: cy }; });
+  ws.forEach((s, i) => { o[s.topologyPositionId] = { x: cx - tw/2 + i*(NODE_W+H_GAP), y: cy }; });
 }
 
 // ─── Material icon paths (24×24 viewBox) ─────────────────────────────────────
@@ -254,24 +264,26 @@ function _simStep(team, step) {
   const n       = members.length;
   if (!n) return { activeSlots: active, activeConns: aConns };
 
-  const entry = team.entryPointMemberId ?? members[0].slotId;
+  // entryPointMemberId no longer exists on TeamEntity (removed — Handoff now resolves the
+  // first agent dynamically at runtime). First member is the closest static approximation.
+  const entry = members[0].topologyPositionId;
 
   // Build directed adjacency from real connections
-  const edges = (team.connections ?? []).map(c => [c.fromSlotId, c.toSlotId]);
+  const edges = (team.connections ?? []).map(c => [c.fromTopologyPositionId, c.toTopologyPositionId]);
   const nextOf = (slot) => edges.filter(([f]) => f === slot).map(([,t]) => t);
 
   switch (orchId) {
     case 'sequential': {
       // One node active at a time in member order
       const i = step % n;
-      active.add(members[i].slotId);
-      if (i + 1 < n) aConns.add(`${members[i].slotId}|${members[i+1].slotId}`);
+      active.add(members[i].topologyPositionId);
+      if (i + 1 < n) aConns.add(`${members[i].topologyPositionId}|${members[i+1].topologyPositionId}`);
       break;
     }
     case 'concurrent': {
       // Phase 0: source dispatches; phases 1…n-1: each worker active
-      const src = members[0].slotId;
-      const workers = members.slice(1).map(m => m.slotId);
+      const src = members[0].topologyPositionId;
+      const workers = members.slice(1).map(m => m.topologyPositionId);
       const phase = step % (workers.length + 2);
       if (phase === 0) {
         active.add(src);
@@ -292,7 +304,7 @@ function _simStep(team, step) {
         nextOf(s).forEach(t => dfs(t));
       };
       dfs(entry);
-      members.forEach(m => { if (!visited.has(m.slotId)) { visited.add(m.slotId); order.push(m.slotId); } });
+      members.forEach(m => { if (!visited.has(m.topologyPositionId)) { visited.add(m.topologyPositionId); order.push(m.topologyPositionId); } });
       const i = step % order.length;
       active.add(order[i]);
       const nxt = order[(i + 1) % order.length];
@@ -303,27 +315,27 @@ function _simStep(team, step) {
     case 'groupChat': {
       // Round-robin: one node speaks at a time, highlights the ring band to its neighbor
       const i = step % n;
-      active.add(members[i].slotId);
+      active.add(members[i].topologyPositionId);
       const next = members[(i + 1) % n];
-      aConns.add(`${members[i].slotId}|${next.slotId}`);
+      aConns.add(`${members[i].topologyPositionId}|${next.topologyPositionId}`);
       break;
     }
     case 'manager-led':
     case 'managerLed': {
-      const mgr = members[0].slotId;
+      const mgr = members[0].topologyPositionId;
       const workers = members.slice(1);
       const phase = step % (workers.length + 1);
       if (phase === 0) {
         active.add(mgr);
-        workers.forEach(w => aConns.add(`${mgr}|${w.slotId}`));
+        workers.forEach(w => aConns.add(`${mgr}|${w.topologyPositionId}`));
       } else {
-        active.add(mgr); active.add(workers[phase - 1].slotId);
-        aConns.add(`${mgr}|${workers[phase-1].slotId}`);
+        active.add(mgr); active.add(workers[phase - 1].topologyPositionId);
+        aConns.add(`${mgr}|${workers[phase-1].topologyPositionId}`);
       }
       break;
     }
     default: {
-      active.add(members[step % n].slotId);
+      active.add(members[step % n].topologyPositionId);
     }
   }
   return { activeSlots: active, activeConns: aConns };
@@ -464,6 +476,40 @@ function _drawDumbbellBand(ctx, ax, ay, ra, bx, by, rb, hwA, hwB, fillStyle) {
 
 // ─── Transparent colour helper ───────────────────────────────────────────────
 // Returns the same colour at alpha=0, for smooth radial-gradient disc edges.
+function _roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y,     x + w, y + r,     r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h,     x, y + h - r,     r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y,         x + r, y,         r);
+  ctx.closePath();
+}
+
+function _ellipsis(ctx, text, maxW) {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+
+function _wrapText(ctx, text, maxW) {
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; }
+    else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
 function _hslTransparent(color) {
   if (color.startsWith('hsl('))  return color.replace('hsl(', 'hsla(').replace(')', ',0)');
   if (color.startsWith('rgb('))  return color.replace('rgb(', 'rgba(').replace(')', ',0)');
@@ -480,6 +526,7 @@ export class AgentivityTeamCanvas {
   #el; #ctx; #theme;
   #team = null; #agents = {};
   #layout = {};
+  #annotations = [];
   #nodeColors    = new Map();  // slotId → { idle, active } color strings
   #nodeHueIndex  = new Map();  // slotId → index into SIM_HUES
   #offscreen     = null;
@@ -520,10 +567,22 @@ export class AgentivityTeamCanvas {
     this.#team   = team;
     this.#agents = agents;
     this.#bnd    = null;
-    this.#layout = computeLayout(
-      team.members, team.orchestratorId,
-      this.#el.width, this.#el.height,
-    );
+    // computeLayout uses TeamLayoutEngine.dart's fixed 800×600 graph-space origin
+    // (not the live canvas pixel size), so annotation coordinates — authored in
+    // Team Studio against that same fixed origin — land exactly where the user
+    // placed them relative to the nodes. No repositioning needed.
+    this.#layout = computeLayout(team.members, team.orchestratorId);
+
+    this.#annotations = (team.annotations ?? []).map(a => ({
+      id:      a.id,
+      x:       a.position.x, y: a.position.y,
+      w:       a.size.width,  h: a.size.height,
+      color:   a.color   || '#334155',
+      content: a.content || '',
+      title:   a.title   || null,
+      zIndex:  a.zIndex  ?? -1,
+    }));
+
     this.#assignNodeColors(team.members);
     this.#simStep  = 0;
     this.#simPhaseT = 0;
@@ -557,7 +616,7 @@ export class AgentivityTeamCanvas {
   #getBounds() {
     if (this.#bnd) return this.#bnd;
     const pts = Object.values(this.#layout);
-    if (!pts.length) return this.#bnd = { minX:0, minY:0, maxX:800, maxY:500 };
+    if (!pts.length && !this.#annotations.length) return this.#bnd = { minX:0, minY:0, maxX:800, maxY:500 };
     let [minX, minY, maxX, maxY] = [Infinity, Infinity, -Infinity, -Infinity];
     for (const p of pts) {
       minX = Math.min(minX, p.x);        minY = Math.min(minY, p.y);
@@ -565,14 +624,25 @@ export class AgentivityTeamCanvas {
     }
     // Expand bounds to include disc overflow
     const d = DISC_R;
-    return this.#bnd = { minX: minX-d, minY: minY-d, maxX: maxX+d, maxY: maxY+d };
+    minX -= d; minY -= d; maxX += d; maxY += d;
+    // Annotations live in the same coordinate space as the node layout — include them
+    // so sticky notes never get clipped or excluded from the auto-fit viewport.
+    for (const a of this.#annotations) {
+      minX = Math.min(minX, a.x);       minY = Math.min(minY, a.y);
+      maxX = Math.max(maxX, a.x + a.w); maxY = Math.max(maxY, a.y + a.h);
+    }
+    return this.#bnd = { minX, minY, maxX, maxY };
   }
 
   #fit() {
-    const pad = 12, b = this.#getBounds();
+    const b = this.#getBounds();
     const cw = this.#el.width, ch = this.#el.height;
+    // Padding scales down with the canvas — a fixed 80px pad leaves almost no
+    // budget on a small card thumbnail (e.g. 270×180), which forced zoom near
+    // zero and made everything (nodes, notes) collapse into illegible slivers.
+    const pad = Math.min(80, cw * 0.08, ch * 0.08);
     const cW = b.maxX - b.minX, cH = b.maxY - b.minY;
-    const zoom = Math.min((cw-pad*2)/cW, (ch-pad*2)/cH, 3.0);
+    const zoom = Math.min((cw-pad*2)/cW, (ch-pad*2)/cH, 2);
     this.#vp = {
       x: cw/2 - (b.minX + cW/2) * zoom,
       y: ch/2 - (b.minY + cH/2) * zoom,
@@ -627,9 +697,12 @@ export class AgentivityTeamCanvas {
     ctx.translate(this.#vp.x, this.#vp.y);
     ctx.scale(this.#vp.zoom, this.#vp.zoom);
 
-    // Layer 2: flow particles (world-space)
+    // Layer 2: sticky-note annotations (world-space, behind nodes)
+    const sortedA = [...this.#annotations].sort((a, b) => a.zIndex - b.zIndex);
+    for (const a of sortedA) this.#drawAnnotation(ctx, a, this.#vp.zoom);
+    // Layer 3: flow particles (world-space)
     this.#renderParticles(ctx, T, conns, t);
-    // Layer 3: hex nodes
+    // Layer 4: hex nodes
     this.#renderCards(ctx, T, t);
 
     ctx.restore();
@@ -678,36 +751,36 @@ export class AgentivityTeamCanvas {
     const nc = pos => ({ x: pos.x + NODE_W/2, y: pos.y + NODE_H/2 });
     const col = (type) => _typeColor(type, T);
 
-    // Real connections from JSON (handoff, sequential with data)
-    const real = (team.connections ?? []).filter(c => L[c.fromSlotId] && L[c.toSlotId]);
+    // Real connections from JSON (sequential with data — handoff excluded: routing is dynamic)
+    const real = (team.connections ?? []).filter(c => L[c.fromTopologyPositionId] && L[c.toTopologyPositionId] && orchId !== 'handoff');
 
     if (real.length > 0) {
       // Directed transitive reduction: remove A→C if A→M and M→C exist (directed).
       // Uses directed pairs only so triangles are handled correctly.
-      const dirSet = new Set(real.map(c => `${c.fromSlotId}|${c.toSlotId}`));
+      const dirSet = new Set(real.map(c => `${c.fromTopologyPositionId}|${c.toTopologyPositionId}`));
       const isConn = (a, b) => dirSet.has(`${a}|${b}`);
 
       // Transitive reduction: remove A→C if A→M and M→C exist for some member M
       const reduced = real.filter(c => {
         return !members.some(m => {
-          const mid = m.slotId;
-          if (mid === c.fromSlotId || mid === c.toSlotId) return false;
-          return isConn(c.fromSlotId, mid) && isConn(mid, c.toSlotId);
+          const mid = m.topologyPositionId;
+          if (mid === c.fromTopologyPositionId || mid === c.toTopologyPositionId) return false;
+          return isConn(c.fromTopologyPositionId, mid) && isConn(mid, c.toTopologyPositionId);
         });
       });
 
       reduced.forEach((c, i) => {
-        const fp = nc(L[c.fromSlotId]), tp = nc(L[c.toSlotId]);
-        const aActive = this.#simState.activeSlots.has(c.fromSlotId);
-        const bActive = this.#simState.activeSlots.has(c.toSlotId);
-        const cA = this.#nodeColors.get(c.fromSlotId) ?? { idle: T.agentColor, active: T.accent };
-        const cB = this.#nodeColors.get(c.toSlotId)   ?? { idle: T.agentColor, active: T.accent };
-        const connKey = `${c.fromSlotId}|${c.toSlotId}`;
+        const fp = nc(L[c.fromTopologyPositionId]), tp = nc(L[c.toTopologyPositionId]);
+        const aActive = this.#simState.activeSlots.has(c.fromTopologyPositionId);
+        const bActive = this.#simState.activeSlots.has(c.toTopologyPositionId);
+        const cA = this.#nodeColors.get(c.fromTopologyPositionId) ?? { idle: T.agentColor, active: T.accent };
+        const cB = this.#nodeColors.get(c.toTopologyPositionId)   ?? { idle: T.agentColor, active: T.accent };
+        const connKey = `${c.fromTopologyPositionId}|${c.toTopologyPositionId}`;
         const connActive = this.#simState.activeConns.has(connKey);
         result.push({ ax: fp.x, ay: fp.y, bx: tp.x, by: tp.y,
           colorA: aActive ? cA.active : cA.idle,
           colorB: bActive ? cB.active : cB.idle,
-          slotA: c.fromSlotId, slotB: c.toSlotId,
+          slotA: c.fromTopologyPositionId, slotB: c.toTopologyPositionId,
           connActive, seed: i*0.17 });
       });
       return result;
@@ -715,21 +788,26 @@ export class AgentivityTeamCanvas {
 
     // Inferred connections
     switch (orchId) {
+      case 'handoff': {
+        // Aucune bande — routing dynamique, aucun chemin prédéfini.
+        // Chaque agent est représenté par son disque seul.
+        break;
+      }
       case 'concurrent': {
-        const src = members[0]; if (!L[src.slotId]) break;
-        const sp = nc(L[src.slotId]);
-        const sA = this.#simState.activeSlots.has(src.slotId);
-        const cSrc = this.#nodeColors.get(src.slotId) ?? { idle: T.agentColor, active: T.accent };
+        const src = members[0]; if (!L[src.topologyPositionId]) break;
+        const sp = nc(L[src.topologyPositionId]);
+        const sA = this.#simState.activeSlots.has(src.topologyPositionId);
+        const cSrc = this.#nodeColors.get(src.topologyPositionId) ?? { idle: T.agentColor, active: T.accent };
         members.slice(1).forEach((m, i) => {
-          const tp = L[m.slotId]; if (!tp) return;
+          const tp = L[m.topologyPositionId]; if (!tp) return;
           const tc = nc(tp);
-          const sB = this.#simState.activeSlots.has(m.slotId);
-          const cM = this.#nodeColors.get(m.slotId) ?? { idle: T.agentColor, active: T.accent };
-          const connKey = `${src.slotId}|${m.slotId}`;
+          const sB = this.#simState.activeSlots.has(m.topologyPositionId);
+          const cM = this.#nodeColors.get(m.topologyPositionId) ?? { idle: T.agentColor, active: T.accent };
+          const connKey = `${src.topologyPositionId}|${m.topologyPositionId}`;
           result.push({ ax: sp.x, ay: sp.y, bx: tc.x, by: tc.y,
             colorA: sA ? cSrc.active : cSrc.idle,
             colorB: sB ? cM.active   : cM.idle,
-            slotA: src.slotId, slotB: m.slotId,
+            slotA: src.topologyPositionId, slotB: m.topologyPositionId,
             connActive: this.#simState.activeConns.has(connKey),
             seed: i*0.23, isTentacle: true });
         });
@@ -739,24 +817,24 @@ export class AgentivityTeamCanvas {
       case 'managerLed': {
         // Org-chart hierarchy: bracket shape drawn in #renderBackground (isOrgChart flag).
         // Each conn carries manager→worker endpoints for simulation/particles.
-        const mgr = members[0]; if (!L[mgr.slotId]) break;
+        const mgr = members[0]; if (!L[mgr.topologyPositionId]) break;
         const workers = members.slice(1); if (!workers.length) break;
-        const mgrC = nc(L[mgr.slotId]);
-        const sA   = this.#simState.activeSlots.has(mgr.slotId);
-        const cMgr = this.#nodeColors.get(mgr.slotId) ?? { idle: T.agentColor, active: T.accent };
+        const mgrC = nc(L[mgr.topologyPositionId]);
+        const sA   = this.#simState.activeSlots.has(mgr.topologyPositionId);
+        const cMgr = this.#nodeColors.get(mgr.topologyPositionId) ?? { idle: T.agentColor, active: T.accent };
         const mgrColor = sA ? cMgr.active : cMgr.idle;
 
         workers.forEach((m, i) => {
-          const tp = L[m.slotId]; if (!tp) return;
+          const tp = L[m.topologyPositionId]; if (!tp) return;
           const tc = nc(tp);
-          const sB      = this.#simState.activeSlots.has(m.slotId);
-          const cM      = this.#nodeColors.get(m.slotId) ?? { idle: T.agentColor, active: T.accent };
-          const connKey = `${mgr.slotId}|${m.slotId}`;
+          const sB      = this.#simState.activeSlots.has(m.topologyPositionId);
+          const cM      = this.#nodeColors.get(m.topologyPositionId) ?? { idle: T.agentColor, active: T.accent };
+          const connKey = `${mgr.topologyPositionId}|${m.topologyPositionId}`;
           result.push({
             ax: mgrC.x, ay: mgrC.y, bx: tc.x, by: tc.y,
             colorA: mgrColor,
             colorB: sB ? cM.active : cM.idle,
-            slotA: mgr.slotId, slotB: m.slotId,
+            slotA: mgr.topologyPositionId, slotB: m.topologyPositionId,
             connActive: this.#simState.activeConns.has(connKey),
             seed: i * 0.23,
             isOrgChart: true,
@@ -769,17 +847,17 @@ export class AgentivityTeamCanvas {
         // Ring: each node connects to the next neighbor around the circle
         members.forEach((m, i) => {
           const next = members[(i + 1) % members.length];
-          const p = L[m.slotId], np = L[next.slotId]; if (!p || !np) return;
+          const p = L[m.topologyPositionId], np = L[next.topologyPositionId]; if (!p || !np) return;
           const mc = nc(p), nextc = nc(np);
-          const sA = this.#simState.activeSlots.has(m.slotId);
-          const sB = this.#simState.activeSlots.has(next.slotId);
-          const cM = this.#nodeColors.get(m.slotId)    ?? { idle: T.agentColor, active: T.accent };
-          const cN = this.#nodeColors.get(next.slotId) ?? { idle: T.agentColor, active: T.accent };
-          const connKey = `${m.slotId}|${next.slotId}`;
+          const sA = this.#simState.activeSlots.has(m.topologyPositionId);
+          const sB = this.#simState.activeSlots.has(next.topologyPositionId);
+          const cM = this.#nodeColors.get(m.topologyPositionId)    ?? { idle: T.agentColor, active: T.accent };
+          const cN = this.#nodeColors.get(next.topologyPositionId) ?? { idle: T.agentColor, active: T.accent };
+          const connKey = `${m.topologyPositionId}|${next.topologyPositionId}`;
           result.push({ ax: mc.x, ay: mc.y, bx: nextc.x, by: nextc.y,
             colorA: sA ? cM.active : cM.idle,
             colorB: sB ? cN.active : cN.idle,
-            slotA: m.slotId, slotB: next.slotId,
+            slotA: m.topologyPositionId, slotB: next.topologyPositionId,
             connActive: this.#simState.activeConns.has(connKey),
             seed: i*0.31 });
         });
@@ -876,8 +954,8 @@ export class AgentivityTeamCanvas {
     }
 
     for (const m of members) {
-      if (addedDiscs.has(m.slotId)) continue;
-      const p = L[m.slotId]; if (!p) continue;
+      if (addedDiscs.has(m.topologyPositionId)) continue;
+      const p = L[m.topologyPositionId]; if (!p) continue;
       addDisc(p.x + NODE_W / 2, p.y + NODE_H / 2, DISC_R);
     }
 
@@ -903,8 +981,8 @@ export class AgentivityTeamCanvas {
       if (c.slotB) pushSpot(c.slotB, c.bx, c.by);
     }
     for (const m of members) {
-      const p = L[m.slotId]; if (!p) continue;
-      pushSpot(m.slotId, p.x + NODE_W / 2, p.y + NODE_H / 2);
+      const p = L[m.topologyPositionId]; if (!p) continue;
+      pushSpot(m.topologyPositionId, p.x + NODE_W / 2, p.y + NODE_H / 2);
     }
     nodeSpots.sort((a, b) => (a.act ? 1 : 0) - (b.act ? 1 : 0));
 
@@ -930,6 +1008,75 @@ export class AgentivityTeamCanvas {
     ctx.save();
     ctx.globalAlpha = BG_ALPHA;
     ctx.drawImage(oc, 0, 0);
+    ctx.restore();
+  }
+
+  // ── Sticky-note annotation ────────────────────────────────────────────────
+  // Mirrors Flutter Studio's AnnotationCard (annotation_card.dart): a solid-color
+  // rounded card, optional bold title, markdown-lite body — no header band.
+
+  #drawAnnotation(ctx, a, zoom) {
+    const hex = a.color;
+    const r   = parseInt(hex.slice(1, 3), 16);
+    const g   = parseInt(hex.slice(3, 5), 16);
+    const b   = parseInt(hex.slice(5, 7), 16);
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    // Studio's _resolveTextColor: light backgrounds get dark text, dark backgrounds get light text.
+    const textCol = lum > 0.55 ? 'rgba(0,0,0,0.82)' : 'rgba(255,255,255,0.94)';
+    const bodyCol = lum > 0.55 ? 'rgba(0,0,0,0.70)' : 'rgba(255,255,255,0.80)';
+
+    ctx.save();
+
+    // Graph-space radius (scales naturally with zoom, like a.w/a.h) — NOT divided
+    // by zoom. At low zoom (large teams), 12/zoom would grow past half the note's
+    // width/height and break roundRect's arcTo geometry (corners overlapping into
+    // a self-intersecting "figure eight" shape).
+    const radius = Math.min(12, a.w / 2, a.h / 2);
+    ctx.fillStyle   = `rgba(${r},${g},${b},1)`;
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
+    ctx.lineWidth   = 1 / zoom;
+    _roundRectPath(ctx, a.x, a.y, a.w, a.h, radius);
+    ctx.fill(); ctx.stroke();
+
+    const padX = 16, padY = 16;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(a.x, a.y, a.w, a.h);
+    ctx.clip();
+
+    let curY = a.y + padY;
+    const maxW = a.w - 2 * padX;
+
+    if (a.title) {
+      ctx.font         = `600 15px system-ui,-apple-system,sans-serif`;
+      ctx.fillStyle    = textCol;
+      ctx.textAlign    = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(_ellipsis(ctx, a.title, maxW), a.x + padX, curY);
+      curY += 15 * 1.3 + 8;
+    }
+
+    // Markdown-lite: '#'-heading lines render bold/larger, everything else plain —
+    // same simplification the workflow canvas uses, no full markdown parser needed
+    // for the short notes these cards typically hold.
+    const lines = a.content.replace(/\r\n/g, '\n').split('\n');
+    const bfs = 12, lineH = bfs * 1.35;
+    for (const raw of lines) {
+      const stripped = raw.trim();
+      if (!stripped) { curY += lineH * 0.6; continue; }
+      const isHeading = /^#+\s*/.test(stripped);
+      const text = stripped.replace(/^#+\s*/, '').replace(/^\*\*(.+)\*\*$/, '$1').replace(/^[-*•]\s*/, '• ').replace(/\*\*/g, '');
+      ctx.font      = isHeading ? `600 ${bfs + 1}px system-ui,-apple-system,sans-serif` : `${bfs}px system-ui,-apple-system,sans-serif`;
+      ctx.fillStyle = isHeading ? textCol : bodyCol;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      for (const wl of _wrapText(ctx, text, maxW)) {
+        if (curY + lineH > a.y + a.h - padY) break;
+        ctx.fillText(wl, a.x + padX, curY);
+        curY += lineH;
+      }
+    }
+
+    ctx.restore();
     ctx.restore();
   }
 
@@ -966,8 +1113,8 @@ export class AgentivityTeamCanvas {
     this.#nodeHueIndex = new Map();
     const isDark = this.#theme.isDark;
     members.forEach((m, i) => {
-      this.#nodeHueIndex.set(m.slotId, i);
-      this.#nodeColors.set(m.slotId, {
+      this.#nodeHueIndex.set(m.topologyPositionId, i);
+      this.#nodeColors.set(m.topologyPositionId, {
         idle:   _simColor(i, false, isDark),
         active: _simColor(i, true,  isDark),
       });
@@ -979,9 +1126,10 @@ export class AgentivityTeamCanvas {
   #renderCards(ctx, T, t) {
     const L = this.#layout, members = this.#team.members, orchId = this.#team.orchestratorId;
     for (const m of members) {
-      const p = L[m.slotId]; if (!p) continue;
-      const isEntry  = m.slotId === this.#team.entryPointMemberId;
-      const isActive = this.#simState.activeSlots.has(m.slotId);
+      const p = L[m.topologyPositionId]; if (!p) continue;
+      // entryPointMemberId no longer exists on TeamEntity — first member approximates it visually.
+      const isEntry  = m.topologyPositionId === members[0].topologyPositionId;
+      const isActive = this.#simState.activeSlots.has(m.topologyPositionId);
       this.#drawHex(ctx, T, m, p.x, p.y, isEntry, orchId, isActive, t);
     }
   }
@@ -989,7 +1137,7 @@ export class AgentivityTeamCanvas {
   // Vertical hexagon node (pointy top/bottom, circumradius HEX_R = 80)
   // Mirrors Flutter: HexagonShape(orientation: HexagonOrientation.vertical)
   #drawHex(ctx, T, member, x, y, isEntry, orchId, isActive = false, t = 0) {
-    const nc2   = this.#nodeColors.get(member.slotId);
+    const nc2   = this.#nodeColors.get(member.topologyPositionId);
     const color = nc2 ? (isActive ? nc2.active : nc2.idle) : _typeColor(member.memberType, T);
     const label = this.#resolveName(member);
     const cx = x + NODE_W / 2;
@@ -1081,7 +1229,7 @@ export class AgentivityTeamCanvas {
     if (member.displayName) return member.displayName;
     const a = this.#agents[member.memberEntityId];
     if (a?.name) return a.name;
-    return member.slotId.charAt(0).toUpperCase() + member.slotId.slice(1);
+    return member.topologyPositionId.charAt(0).toUpperCase() + member.topologyPositionId.slice(1);
   }
 
   // ── Events ───────────────────────────────────────────────────────────────────

@@ -11,8 +11,9 @@ interface Props {
 export const dynamicParams = false
 
 export async function generateStaticParams() {
+  const registry = await getRegistry()
   const seen = new Set<string>()
-  return getRegistry()
+  return registry
     .filter(t => typeof t.slug === 'string' && t.slug.length > 0)
     .filter(t => { if (seen.has(t.slug)) return false; seen.add(t.slug); return true })
     .map(t => ({ slug: t.slug }))
@@ -20,7 +21,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const t = getTemplateBySlug(slug)
+  const t = await getTemplateBySlug(slug)
   if (!t) return {}
   return {
     title:       t.name,
@@ -36,7 +37,7 @@ const KIND_LABEL: Record<string, string> = {
 
 export default async function TemplatePage({ params }: Props) {
   const { slug } = await params
-  const t = getTemplateBySlug(slug)
+  const t = await getTemplateBySlug(slug)
   if (!t) notFound()
 
   return (
