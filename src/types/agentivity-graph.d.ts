@@ -11,6 +11,8 @@ interface AgentivityGraphAttributes extends HTMLAttributes<HTMLElement> {
   interactive?: ''
   'step-ms'?: number
   theme?: 'light' | 'dark'
+  /** A workflow (or an agent): `follow` opens on the start and follows the running step, in a frame of its own height. Default `fit`. */
+  camera?: 'follow' | 'fit'
 }
 
 declare module 'react' {

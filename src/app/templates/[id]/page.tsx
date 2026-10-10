@@ -86,13 +86,16 @@ export default async function TemplatePage({ params }: Props) {
 
           <section aria-labelledby="graph-title">
             <h2 className="h3" id="graph-title">{ROOT_HEADING[template.root.kind] ?? 'At a glance'}</h2>
-            <p className="hint">Drag to move, scroll or pinch to zoom.</p>
+            <p className="hint">
+              {template.root.kind === 'team' ? 'Drag to move, scroll or pinch to zoom.' : 'The view follows the steps as they run. Drag to move, scroll or pinch to zoom.'}
+            </p>
             <TemplateGraph
               src={template.rootUrl}
               source={template.rootSource}
               label={`Interactive diagram of ${template.name}`}
               interactive
               autoplay
+              camera={template.root.kind === 'team' ? 'fit' : 'follow'}
             />
           </section>
 

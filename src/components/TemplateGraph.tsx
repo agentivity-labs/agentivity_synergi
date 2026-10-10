@@ -14,13 +14,18 @@ interface Props {
   autoplay?: boolean
   /** Shrinks the drawing so it fits the height of its frame (card thumbnails). */
   fit?: boolean
+  /**
+   * For a workflow or an agent: `follow` opens on the start nodes at a readable scale and moves with the run, in a frame
+   * that has its own height. `fit` (default) keeps the whole diagram in view. A team is not affected.
+   */
+  camera?: 'follow' | 'fit'
 }
 
 /**
  * The graph of a Template's root, drawn by the `<agentivity-graph>` web component (loaded once in the layout).
  * The component only renders in the browser, so the frame around it reserves the space and avoids a layout jump.
  */
-export default function TemplateGraph({ src, source, label, interactive = false, autoplay = false, fit = false }: Props) {
+export default function TemplateGraph({ src, source, label, interactive = false, autoplay = false, fit = false, camera = 'fit' }: Props) {
   const frame = useRef<HTMLElement>(null)
   const element = useRef<HTMLElement>(null)
   const [failed, setFailed] = useState(false)
@@ -58,7 +63,8 @@ export default function TemplateGraph({ src, source, label, interactive = false,
     return () => observer.disconnect()
   }, [fit])
 
-  const classes = ['graph-frame', interactive && 'graph-frame--interactive', fit && 'graph-frame--fit'].filter(Boolean).join(' ')
+  const following = camera === 'follow'
+  const classes = ['graph-frame', interactive && 'graph-frame--interactive', fit && 'graph-frame--fit', following && 'graph-frame--follow'].filter(Boolean).join(' ')
 
   return (
     <figure ref={frame} className={classes} aria-label={label}>
@@ -71,6 +77,7 @@ export default function TemplateGraph({ src, source, label, interactive = false,
           {...(src && !source ? { src } : {})}
           {...(interactive ? { interactive: '' as const } : {})}
           {...(autoplay ? { autoplay: '' as const } : {})}
+          {...(following ? { camera: 'follow' as const } : {})}
         />
       )}
     </figure>

@@ -212,6 +212,9 @@ em { font-style: italic; }
 .graph-frame { display: grid; align-items: center; min-height: 240px; border-radius: 20px; border: 1px solid var(--line-2); background: #fff; overflow: hidden; }
 /* Reserved before the drawing arrives. A team is taller than this and grows the frame; a long workflow is a thin strip. */
 .graph-frame--interactive { min-height: 240px; }
+/* A workflow in "follow" mode is a viewer: it takes the height given to the element, and clips the drawing to it. */
+.graph-frame--follow { min-height: 0; }
+.graph-frame--follow agentivity-graph { height: clamp(340px, 42vw, 500px); }
 .graph-frame agentivity-graph { display: block; width: 100%; }
 .graph-error { padding: 24px; text-align: center; font-size: 15.5px; color: var(--ink-3); }
 
