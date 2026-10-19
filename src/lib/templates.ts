@@ -13,13 +13,14 @@ export function languageName(code: string): string {
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`
 
-/** "1 team · 13 agents · 2 data tables". Kinds with a count of zero are left out. */
+/** "1 team · 13 agents · 2 data tables · 1 knowledge base". Kinds with a count of zero are left out. */
 export function describeCounts(counts: TemplateCounts): string {
   const parts: string[] = []
   if (counts.teams > 0) parts.push(plural(counts.teams, 'team', 'teams'))
   if (counts.workflows > 0) parts.push(plural(counts.workflows, 'workflow', 'workflows'))
   if (counts.agents > 0) parts.push(plural(counts.agents, 'agent', 'agents'))
   if (counts.dataTables > 0) parts.push(plural(counts.dataTables, 'data table', 'data tables'))
+  if ((counts.knowledgeBases ?? 0) > 0) parts.push(plural(counts.knowledgeBases ?? 0, 'knowledge base', 'knowledge bases'))
   return parts.join(' · ')
 }
 
@@ -38,7 +39,7 @@ export function cardSummary(template: Pick<TemplateSummary, 'tagline' | 'descrip
 }
 
 const KIND_LABELS: Record<string, string> = {
-  team: 'Team', workflow: 'Workflow', agent: 'Agent', datatable: 'Data table',
+  team: 'Team', workflow: 'Workflow', agent: 'Agent', datatable: 'Data table', knowledgebase: 'Knowledge base',
 }
 
 export function kindLabel(kind: string): string {

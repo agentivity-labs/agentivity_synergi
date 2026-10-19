@@ -22,6 +22,8 @@ export interface TemplateCounts {
   teams: number
   workflows: number
   dataTables: number
+  /** Missing from the Templates published before Knowledge Bases. */
+  knowledgeBases?: number
 }
 
 export interface TemplateRequires {

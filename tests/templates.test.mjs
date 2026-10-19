@@ -3,7 +3,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FIXTURES } from '../src/data/fixtures.ts'
-import { cardSummary, collectLanguages, collectTags, describeCounts, describeRequirements, filterTemplates, truncate } from '../src/lib/templates.ts'
+import { cardSummary, collectLanguages, collectTags, describeCounts, describeRequirements, filterTemplates, kindLabel, truncate } from '../src/lib/templates.ts'
 
 const ids = (templates) => templates.map((template) => template.id).sort()
 const all = { query: '', tags: [], language: '' }
@@ -24,6 +24,8 @@ test('describeCounts leaves out what is absent and handles the singular', () => 
   assert.equal(describeCounts({ teams: 1, agents: 13, workflows: 0, dataTables: 2 }), '1 team · 13 agents · 2 data tables')
   assert.equal(describeCounts({ teams: 0, agents: 1, workflows: 0, dataTables: 1 }), '1 agent · 1 data table')
   assert.equal(describeCounts({ teams: 0, agents: 0, workflows: 1, dataTables: 0 }), '1 workflow')
+  assert.equal(describeCounts({ teams: 0, agents: 1, workflows: 0, dataTables: 0, knowledgeBases: 2 }), '1 agent · 2 knowledge bases')
+  assert.equal(kindLabel('knowledgebase'), 'Knowledge base')
 })
 
 test('cardSummary prefers the tagline, otherwise the start of the description', () => {
