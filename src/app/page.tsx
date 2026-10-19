@@ -26,7 +26,7 @@ export default async function HomePage() {
       </section>
 
       <section className="band band--mist" id="catalogue" aria-labelledby="catalogue-title">
-        <div className="wrap sec">
+        <div className="wrap wrap--wide sec">
           <header className="sec-head">
             <p className="eyebrow">Catalogue</p>
             <h2 className="h2" id="catalogue-title">Find a <em>starting point.</em></h2>

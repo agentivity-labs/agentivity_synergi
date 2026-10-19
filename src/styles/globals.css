@@ -68,6 +68,8 @@ em { font-style: italic; }
 
 /* ---------- shared building blocks ---------- */
 .wrap { max-width: var(--wrap); margin: 0 auto; padding-inline: var(--pad); }
+/* The catalogue uses most of a wide screen: more cards to a row, as many as fit. */
+.wrap--wide { max-width: 1760px; }
 .eyebrow { font-size: 14.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2); }
 .h2 { font-family: var(--serif); font-size: clamp(36px, 4.4vw, 62px); line-height: 1.02; letter-spacing: -.015em; text-wrap: balance; }
 .h3 { font-family: var(--serif); font-size: clamp(28px, 3vw, 38px); line-height: 1.08; }
@@ -188,19 +190,26 @@ em { font-style: italic; }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: clamp(40px, 6vw, 72px) 24px; border-radius: 24px; background: #fff; text-align: center; color: var(--ink-2); }
 .empty-title { font-family: var(--serif); font-size: 32px; line-height: 1.1; color: var(--ink); }
 
-/* ---------- catalogue: cards (every card of a row has the same height) ---------- */
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 20px; align-items: stretch; }
-.card { position: relative; display: flex; flex-direction: column; height: 100%; background: #fff; border-radius: 24px; overflow: hidden; transition: box-shadow .2s ease, transform .2s ease; }
-.card:hover { box-shadow: 0 30px 50px -34px rgba(16, 26, 46, .45); transform: translateY(-2px); }
+/* ---------- catalogue: small cards, as many to a row as the width allows (every card of a row has the same height) ---------- */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(232px, 100%), 1fr)); gap: 16px; align-items: stretch; }
+.card { position: relative; display: flex; flex-direction: column; height: 100%; background: #fff; border-radius: 16px; overflow: hidden; transition: box-shadow .2s ease, transform .2s ease; }
+.card:hover { box-shadow: 0 24px 40px -30px rgba(16, 26, 46, .45); transform: translateY(-2px); }
 .card:focus-within { box-shadow: 0 0 0 2px var(--navy); }
-.card-body { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 20px 22px 22px; }
-.card h3 { font-family: var(--serif); font-size: 30px; line-height: 1.06; color: var(--ink); }
+.card-body { flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 12px 14px 14px; min-width: 0; }
+.card h3 { font-family: var(--serif); font-size: 21px; line-height: 1.1; color: var(--ink); }
 .card-link::after { content: ""; position: absolute; inset: 0; }
 .card-link:focus-visible { outline: none; }
-.card-summary { color: var(--ink-2); font-size: 16.5px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
-.card-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; }
+.card-summary { color: var(--ink-2); font-size: 14px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.card-foot { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
 .card-contents { font-weight: 600; color: var(--ink); }
-.card-author { color: var(--ink-3); }
+.card-author { font-weight: 400; color: var(--ink-3); }
+.card .tags { gap: 4px; }
+.card .tag { padding: 2px 8px; font-size: 12px; }
+/* On a phone, one card to a row: a thumbnail on the left keeps it short. */
+@media (max-width: 560px) {
+  .card { display: grid; grid-template-columns: 112px minmax(0, 1fr); }
+  .card > .cover { aspect-ratio: auto; height: 100%; }
+}
 
 /* ---------- cover and graph ---------- */
 .cover { aspect-ratio: 3 / 2; overflow: hidden; background: var(--mist); }
@@ -270,7 +279,7 @@ em { font-style: italic; }
 @media (max-width: 560px) {
   .contents-list li { flex-direction: column; gap: 6px; }
   .contents-list .pill { min-width: 0; }
-  .card h3 { font-size: 28px; }
+  .card h3 { font-size: 21px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card:hover, .btn:hover { transform: none; }
