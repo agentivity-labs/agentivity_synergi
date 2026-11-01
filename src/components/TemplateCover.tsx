@@ -17,7 +17,7 @@ export default function TemplateCover({ template, priority = false }: Props) {
   return (
     <div className="cover">
       {cover ? (
-        // eslint-disable-next-line @next/next/no-img-element -- static export: the image stays on the marketplace storage
+        // eslint-disable-next-line @next/next/no-img-element -- the image stays on the marketplace storage
         <img
           src={cover.imageUrl}
           alt={cover.alt?.trim() || template.name}

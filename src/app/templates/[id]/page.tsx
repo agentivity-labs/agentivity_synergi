@@ -11,9 +11,9 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-// A static export: only the Templates known at build time have a page.
-export const dynamicParams = false
+export const revalidate = 60
 
+// The Templates known at build time are ready at once; a newer one is rendered on its first visit, then kept as static HTML.
 export async function generateStaticParams() {
   const templates = await getTemplates()
   return templates.map((template) => ({ id: template.id }))

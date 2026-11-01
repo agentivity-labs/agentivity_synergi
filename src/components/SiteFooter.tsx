@@ -29,7 +29,7 @@ export default function SiteFooter() {
           ))}
         </div>
 
-        <div className="sf-bottom">© {new Date().getFullYear()} Agentivity · Synergi, the Template library of agentivity.io</div>
+        <div className="sf-bottom">© {new Date().getFullYear()} SMART PIXEL BV · Agentivity™ · All rights reserved</div>
       </div>
     </footer>
   )

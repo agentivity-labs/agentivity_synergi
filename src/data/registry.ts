@@ -1,6 +1,6 @@
-// Template catalogue, read from the Agentivity Marketplace API at build time.
-// This site is a static export (`output: 'export'` in next.config.ts): there is no server to call the API per request,
-// so the catalogue is a snapshot taken whenever the site is built. Filtering then happens in the browser.
+// Template catalogue, read from the Agentivity Marketplace API.
+// The pages are static HTML that Next.js renders again at most once a minute (`revalidate`), so a published Template
+// appears without a build. When the API is down, the last good pages stay online. Filtering happens in the browser.
 
 import { FIXTURES } from './fixtures'
 import type { CatalogueTemplate, CatalogueTemplateDetail, TemplateDetail, TemplateSummary } from './types'
@@ -45,12 +45,9 @@ async function fetchAllTemplates(): Promise<CatalogueTemplate[]> {
   return templates
 }
 
-let cache: Promise<CatalogueTemplate[]> | null = null
-
 /** Every published Template, sorted by name (the API order). */
 export function getTemplates(): Promise<CatalogueTemplate[]> {
-  if (!cache) cache = USE_FIXTURES ? Promise.resolve(FIXTURES) : fetchAllTemplates()
-  return cache
+  return USE_FIXTURES ? Promise.resolve(FIXTURES) : fetchAllTemplates()
 }
 
 /** One Template with its content list, or undefined when the id is unknown. */

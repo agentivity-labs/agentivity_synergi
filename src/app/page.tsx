@@ -8,6 +8,8 @@ const STEPS = [
   { title: 'Import it in the Studio', body: 'In the Agentivity Studio, open Templates, then Import from file. Then make it yours.' },
 ]
 
+export const revalidate = 60
+
 export default async function HomePage() {
   const templates = await getTemplates()
 
@@ -54,9 +56,10 @@ export default async function HomePage() {
       <section className="band band--yellow" aria-labelledby="cta-title">
         <div className="wrap final">
           <h2 id="cta-title">No Studio yet? <em>Start free.</em></h2>
-          <p className="final-sub">The Community edition of Agentivity is free and runs on your own server. Hosted plans are on the way.</p>
+          <p className="final-sub">Start free in the cloud, or install the Community edition on your own server.</p>
           <div className="actions">
-            <a className="btn btn--navy" href={`${WEBSITE_URL}/community`}>Install Community</a>
+            <a className="btn btn--navy" href={`${WEBSITE_URL}/start`}>Start free</a>
+            <a className="btn btn--line" href={`${WEBSITE_URL}/community`}>Install Community</a>
             <a className="btn btn--line" href={`${WEBSITE_URL}/pricing`}>See the editions</a>
           </div>
         </div>
