@@ -1,6 +1,6 @@
 import { getTemplates } from '@/data/registry'
 import Catalogue from '@/components/Catalogue'
-import { WEBSITE_URL } from '@/lib/site'
+import { TRIAL_NOTE, WEBSITE_URL } from '@/lib/site'
 
 const STEPS = [
   { title: 'Pick a Template', body: 'Each one is a complete Solution: a team, a workflow or an agent, with everything it needs.' },
@@ -55,13 +55,14 @@ export default async function HomePage() {
 
       <section className="band band--yellow" aria-labelledby="cta-title">
         <div className="wrap final">
-          <h2 id="cta-title">No Studio yet? <em>Start free.</em></h2>
-          <p className="final-sub">Start free in the cloud, or install the Community edition on your own server.</p>
+          <h2 id="cta-title">No Studio yet? <em>Start today.</em></h2>
+          <p className="final-sub">Try it in the cloud, or install the Community edition on your own server.</p>
           <div className="actions">
-            <a className="btn btn--navy" href={`${WEBSITE_URL}/start`}>Start free</a>
+            <a className="btn btn--navy" href={`${WEBSITE_URL}/start`}>Build your first team</a>
             <a className="btn btn--line" href={`${WEBSITE_URL}/community`}>Install Community</a>
             <a className="btn btn--line" href={`${WEBSITE_URL}/pricing`}>See the editions</a>
           </div>
+          <p className="trial-note">{TRIAL_NOTE}</p>
         </div>
       </section>
     </>

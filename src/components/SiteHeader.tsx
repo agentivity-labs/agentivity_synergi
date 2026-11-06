@@ -93,7 +93,7 @@ export default function SiteHeader() {
           <a className="sh-github" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
             <GitHubIcon size={17} />Star on GitHub
           </a>
-          <a className="btn btn--sm btn--navy" href={START_URL}>Start free</a>
+          <a className="btn btn--sm btn--navy" href={START_URL}>Start your trial</a>
           <button
             className="sh-burger"
             type="button"
@@ -160,7 +160,7 @@ export default function SiteHeader() {
           <a href={INSTALL_URL}>Install Community</a>
           <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">Star on GitHub</a>
         </nav>
-        <a className="btn btn--navy sh-menu-cta" href={START_URL}>Start free</a>
+        <a className="btn btn--navy sh-menu-cta" href={START_URL}>Start your trial</a>
       </div>
     </header>
   )

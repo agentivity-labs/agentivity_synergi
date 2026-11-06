@@ -18,7 +18,7 @@ export default function SiteFooter() {
               {/* eslint-disable-next-line @next/next/no-img-element -- a small local SVG */}
               <img src="/agentivity-wordmark-navy.svg" alt="Agentivity" width={94} height={26} loading="lazy" />
             </a>
-            <p>Build your AI team. Free to start, yours to extend.</p>
+            <p>Build your AI team. Yours to extend.</p>
           </div>
 
           {FOOTER_COLUMNS.map((column) => (

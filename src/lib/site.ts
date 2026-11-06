@@ -6,6 +6,8 @@ export const WEBSITE_URL = 'https://www.agentivity.io'
 export const GITHUB_URL = 'https://github.com/agentivity-labs/agentivity'
 export const START_URL = `${WEBSITE_URL}/start`
 export const INSTALL_URL = `${WEBSITE_URL}/community`
+// The terms of the trial, under its main button, as on the website (its plans.json holds the length).
+export const TRIAL_NOTE = '14-day trial · no card · AI usage billed by your provider'
 
 export interface NavLink {
   label: string
