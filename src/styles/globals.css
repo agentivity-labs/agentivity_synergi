@@ -119,11 +119,33 @@ em { font-style: italic; }
 .sh-links a:hover { color: var(--ink); }
 .sh-links a[aria-current] { color: var(--ink); font-weight: 700; box-shadow: 0 2px 0 var(--yellow); }
 .pm-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; white-space: nowrap; transition: color .15s ease; }
-.pm-trigger:hover, .sh.pm-open .pm-trigger { color: var(--ink); }
+.pm-trigger:hover, .pm-trigger[aria-expanded="true"] { color: var(--ink); }
 .pm-trigger svg { transition: transform .2s ease; }
-.sh.pm-open .pm-trigger svg { transform: rotate(180deg); }
+.pm-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
 .pm-panel { position: absolute; left: 0; right: 0; top: 100%; background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 30px 50px -34px rgba(16, 26, 46, .45); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity .16s ease, transform .16s ease, visibility .16s; }
-.sh.pm-open .pm-panel { opacity: 1; visibility: visible; transform: none; }
+.pm-panel.is-open { opacity: 1; visibility: visible; transform: none; }
+/* Solutions menu: the groups by department, and the "Built for" column (as on the website) */
+.sm-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px 36px; padding-block: 26px 24px; }
+.sm-groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 24px; padding: 0 12px; }
+.sm-group-title { font-size: 15px; font-weight: 700; color: var(--ink); padding-bottom: 6px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.sm-sol { display: block; padding: 5px 0; font-size: 14.5px; line-height: 1.35; color: var(--ink-2); }
+.sm-group ul { list-style: none; margin: 0; padding: 0; }
+a.sm-sol { font-weight: 600; color: var(--ink); }
+a.sm-sol:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.sm-sol--soon { color: var(--ink-3); }
+.sm-soon { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: var(--mist); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); vertical-align: 1px; }
+.sm-all { display: inline-block; margin: 16px 12px 0; font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.sm-all:hover { color: var(--ink); }
+.sm-built { display: flex; flex-direction: column; gap: 4px; padding: 18px; border-radius: 18px; background: var(--navy); color: var(--on-navy); }
+.sm-built-title { font-size: 12.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--yellow); padding: 2px 8px 8px; }
+.sm-built-item { display: flex; gap: 12px; padding: 10px 8px; border-radius: 12px; transition: background .12s ease; }
+.sm-built-item:hover { background: rgba(255, 255, 255, .08); }
+.sm-built-ico { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 255, 255, .1); color: #fff; }
+.sm-built .pm-txt b { color: #fff; }
+.sm-built .pm-txt span { color: var(--on-navy); }
+.sm-company { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 6px; padding: 12px 8px 4px; border-top: 1px solid var(--navy-line); font-size: 14px; line-height: 1.4; }
+.sm-company b { font-size: 16px; color: #fff; }
+.sm-company .sm-soon { margin: 6px 0 0; background: rgba(255, 255, 255, .12); color: var(--yellow); }
 .pm-grid { display: grid; grid-template-columns: 290px repeat(3, minmax(0, 1fr)); gap: 12px 32px; padding-block: 28px 24px; }
 .pm-intro { display: flex; flex-direction: column; gap: 10px; padding: 24px 24px 22px; border-radius: 18px; background: var(--navy); color: var(--on-navy); font-size: 15.5px; line-height: 1.5; }
 .pm-intro strong { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1; color: #fff; }
@@ -148,6 +170,7 @@ em { font-style: italic; }
 .sh-menu-group { padding-bottom: 10px; }
 .sh-menu-group p { padding: 10px 0 2px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
 .sh-menu nav .sh-menu-group a { padding: 8px 0 8px 14px; font-size: 16px; border-bottom: 0; }
+.sh-menu-soon { display: block; padding: 8px 0 8px 14px; font-size: 16px; color: var(--ink-3); }
 .sh-actions { display: flex; align-items: center; gap: 18px; margin-left: auto; }
 .sh-github { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--line-2); font-size: 15.5px; font-weight: 600; white-space: nowrap; transition: border-color .15s ease; }
 .sh-github:hover { border-color: var(--ink); }

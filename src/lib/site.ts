@@ -18,7 +18,6 @@ export interface NavLink {
 
 /** Same entries, same order as the website header. "Synergi" is this site. */
 export const NAV_LINKS: NavLink[] = [
-  { label: 'Use Cases', href: `${WEBSITE_URL}/use-cases` },
   { label: 'Synergi', href: '/' },
   { label: 'Services', href: `${WEBSITE_URL}/services` },
   { label: 'Blog', href: `${WEBSITE_URL}/blog` },
@@ -42,6 +41,7 @@ export const PRODUCT_MENU = {
         { icon: 'team', label: 'Teams', body: 'AI specialists that work together', href: `${WEBSITE_URL}/teams` },
         { icon: 'agent', label: 'Agents', body: 'One specialist, one role, its own tools', href: `${WEBSITE_URL}/agents` },
         { icon: 'workflow', label: 'Workflows', body: 'Fixed steps, with a person who approves', href: `${WEBSITE_URL}/workflows` },
+        { icon: 'plug', label: 'Connections', body: 'The apps and AI models it works with', href: `${WEBSITE_URL}/connections` },
       ],
     },
     {
@@ -56,6 +56,7 @@ export const PRODUCT_MENU = {
       items: [
         { icon: 'app', label: 'VibeApps', body: 'Apps your users simply talk to', href: `${WEBSITE_URL}/vibeapps` },
         { icon: 'assistant', label: 'Assistant', body: 'Build by describing what you need', href: `${WEBSITE_URL}/assistant` },
+        { icon: 'desk', label: 'Desk', body: 'Where your whole team uses your AI teams', href: `${WEBSITE_URL}/desk` },
       ],
     },
   ],
@@ -63,6 +64,68 @@ export const PRODUCT_MENU = {
     { label: 'Ready-made Solutions on Synergi', href: '/' },
     { label: 'Install the free Community edition', href: INSTALL_URL },
   ],
+}
+
+/** The Solutions menu of the website header: the solutions by department (a group shows once one of its solutions is live;
+ * a solution without a page says "Soon"), and who they are built for. */
+export const SOLUTIONS_MENU = {
+  label: 'Solutions',
+  byDepartment: 'By department',
+  soon: 'Soon',
+  groups: [
+    { title: 'Sales', items: [
+      { label: 'Lead Researcher' },
+      { label: 'Quote Builder' },
+      { label: 'Product Compare Team', href: `${WEBSITE_URL}/solutions/product-compare-team` },
+      { label: 'Account Manager' },
+    ] },
+    { title: 'Support', items: [
+      { label: 'Service Desk', href: `${WEBSITE_URL}/solutions/service-desk` },
+      { label: 'Complaint Handler' },
+      { label: 'Order Support Agent' },
+      { label: 'Subscription Care' },
+    ] },
+    { title: 'Finance', items: [
+      { label: 'Invoice Clerk', href: `${WEBSITE_URL}/solutions/invoice-clerk` },
+      { label: 'Cash Flow Analyst' },
+      { label: 'Monthly Report' },
+      { label: 'Invoice Processing' },
+    ] },
+    { title: 'People (HR)', items: [
+      { label: 'CV Screener', href: `${WEBSITE_URL}/solutions/cv-screener` },
+      { label: 'Onboarding Coordinator' },
+      { label: 'Recruiter' },
+      { label: 'Training Coordinator' },
+    ] },
+    { title: 'Marketing', items: [
+      { label: 'Image Creator', href: `${WEBSITE_URL}/solutions/image-creator` },
+      { label: 'Blog Writer Team' },
+      { label: 'Social Media Manager' },
+      { label: 'Email Marketer' },
+    ] },
+    { title: 'Personal & fun', items: [
+      { label: 'Trip Planner', href: `${WEBSITE_URL}/solutions/trip-planner` },
+      { label: 'Training Coach', href: `${WEBSITE_URL}/solutions/training-coach` },
+      { label: 'Meal Planner' },
+      { label: 'Game Master Team' },
+    ] },
+    { title: 'Creators', items: [
+      { label: 'Video Script Team' },
+      { label: 'Podcast Notes' },
+      { label: 'Newsletter Writer' },
+      { label: 'Thumbnail Creator' },
+    ] },
+  ] as { title: string; items: { label: string; href?: string }[] }[],
+  all: { label: 'View all on Synergi', href: '/' },
+  builtFor: {
+    title: 'Built for',
+    items: [
+      { icon: 'maker', label: 'Your own projects', body: 'Automate your own work and side projects', href: `${WEBSITE_URL}/solutions/your-own-projects` },
+      { icon: 'agency', label: 'Freelancers & agencies', body: 'Deliver automations and AI to your clients', href: `${WEBSITE_URL}/solutions/freelancers-and-agencies` },
+      { icon: 'desk', label: 'Companies', body: 'Your best way of doing the work, used by everyone', href: `${WEBSITE_URL}/desk` },
+    ],
+    company: { label: 'The whole AI company', body: 'Northmoor: departments run by AI teams' },
+  },
 }
 
 export const FOOTER_COLUMNS: { title: string; links: NavLink[] }[] = [
@@ -77,7 +140,7 @@ export const FOOTER_COLUMNS: { title: string; links: NavLink[] }[] = [
       { label: 'Prompt Studio', href: `${WEBSITE_URL}/prompt-studio` },
       { label: 'Knowledge & Data', href: `${WEBSITE_URL}/knowledge-and-data` },
       { label: 'VibeApps', href: `${WEBSITE_URL}/vibeapps` },
-      { label: 'Use Cases', href: `${WEBSITE_URL}/use-cases` },
+      { label: 'Solutions', href: `${WEBSITE_URL}/solutions` },
       { label: 'Services', href: `${WEBSITE_URL}/services` },
       { label: 'Pricing', href: `${WEBSITE_URL}/pricing` },
       { label: 'Docs', href: `${WEBSITE_URL}/docs` },
