@@ -89,7 +89,7 @@ export const SOLUTIONS_MENU = {
       { label: 'Invoice Clerk', href: `${WEBSITE_URL}/solutions/invoice-clerk` },
       { label: 'Cash Flow Analyst' },
       { label: 'Monthly Report' },
-      { label: 'Invoice Processing' },
+      { label: 'Contract Checker', href: `${WEBSITE_URL}/solutions/contract-checker` },
     ] },
     { title: 'People (HR)', items: [
       { label: 'CV Screener', href: `${WEBSITE_URL}/solutions/cv-screener` },
