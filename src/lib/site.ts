@@ -75,7 +75,7 @@ export const SOLUTIONS_MENU = {
   groups: [
     { title: 'Sales', items: [
       { label: 'Lead Researcher' },
-      { label: 'Quote Builder' },
+      { label: 'Quote Desk', href: `${WEBSITE_URL}/solutions/quote-desk` },
       { label: 'Product Compare Team', href: `${WEBSITE_URL}/solutions/product-compare-team` },
       { label: 'Account Manager' },
     ] },
