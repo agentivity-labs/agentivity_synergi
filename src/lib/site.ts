@@ -90,6 +90,8 @@ export const SOLUTIONS_MENU = {
       { label: 'Cash Flow Analyst' },
       { label: 'Monthly Report' },
       { label: 'Contract Checker', href: `${WEBSITE_URL}/solutions/contract-checker` },
+      { label: 'Expense Checker', href: `${WEBSITE_URL}/solutions/expense-checker` },
+      { label: 'Purchase Request Desk', href: `${WEBSITE_URL}/solutions/purchase-request-desk` },
     ] },
     { title: 'People (HR)', items: [
       { label: 'CV Screener', href: `${WEBSITE_URL}/solutions/cv-screener` },
